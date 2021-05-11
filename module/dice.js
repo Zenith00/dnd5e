@@ -242,7 +242,7 @@ async function _d20RollDialog({template, title, parts, data, rollMode, dialogOpt
           callback: html => resolve(roll(parts, 2, html[0].querySelector("form")))
         },
         advantage        : {
-          label   : game.i18n.localize("DND5E.Advantage"),
+          label   : "Adv",
           callback: html => resolve(roll(parts, 1, html[0].querySelector("form")))
         },
         normal           : {
@@ -250,7 +250,7 @@ async function _d20RollDialog({template, title, parts, data, rollMode, dialogOpt
           callback: html => resolve(roll(parts, 0, html[0].querySelector("form")))
         },
         disadvantage     : {
-          label   : game.i18n.localize("DND5E.Disadvantage"),
+          label   : "Disadv",
           callback: html => resolve(roll(parts, -1, html[0].querySelector("form")))
         },
         superdisadvantage: {
