@@ -95,5 +95,5 @@
   "compatibleCoreVersion": "0.7.9",
   "url": "https://github.com/Zenith00/dnd5e",
   "manifest": "https://raw.githubusercontent.com/Zenith00/dnd5e/master/system.json",
-  "download": ""
+  "download": "https://github.com/Zenith00/dnd5e/releases/download/latest/system.zip"
 }
