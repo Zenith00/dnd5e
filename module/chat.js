@@ -18,7 +18,7 @@ export const highlightCriticalSuccessFailure = function(message, html, data) {
 
   // Highlight successes and failures
   const critical = d.options.critical || 20;
-  const decisive = critical - 2;
+  const decisive = critical - 1;
   const fumble = d.options.fumble || 1;
   if ( d.total >= critical ) html.find(".dice-total").addClass("critical");
   else if (d.total >= decisive)  html.find(".dice-total").addClass("decisive");
