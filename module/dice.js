@@ -41,7 +41,7 @@ export function simplifyRollFormula(formula, data, {constantFirst = false} = {})
   const constantPart = roll._safeEval(constantFormula);      // Mathematically evaluate the constant formula to produce a single constant term
 
   const parts = constantFirst ? // Order the rollable and constant terms, either constant first or second depending on the optional argumen
-    [constantPart, rollableFormula] : [rollableFormula, constantPart];
+                [constantPart, rollableFormula] : [rollableFormula, constantPart];
 
   // Join the parts with a + sign, pass them to `Roll` once again to clean up the formula
   return new Roll(parts.filterJoin(" + ")).formula;
@@ -55,11 +55,11 @@ export function simplifyRollFormula(formula, data, {constantFirst = false} = {})
  * @return {Boolean} True when unsupported, false if supported
  */
 function _isUnsupportedTerm(term) {
-	const diceTerm = term instanceof DiceTerm;
-	const operator = ["+", "-"].includes(term);
-	const number   = !isNaN(Number(term));
+  const diceTerm = term instanceof DiceTerm;
+  const operator = ["+", "-"].includes(term);
+  const number = !isNaN(Number(term));
 
-	return !(diceTerm || operator || number);
+  return !(diceTerm || operator || number);
 }
 
 /* -------------------------------------------- */
@@ -94,11 +94,13 @@ function _isUnsupportedTerm(term) {
  *
  * @return {Promise}                A Promise which resolves once the roll workflow has completed
  */
-export async function d20Roll({parts=[], data={}, event={}, rollMode=null, template=null, title=null, speaker=null,
-  flavor=null, fastForward=null, dialogOptions,
-  advantage=null, disadvantage=null, critical=20, fumble=1, targetValue=null,
-  elvenAccuracy=false, halflingLucky=false, reliableTalent=false,
-  chatMessage=true, messageData={}}={}) {
+export async function d20Roll({
+                                parts = [], data = {}, event = {}, rollMode = null, template = null, title = null, speaker = null,
+                                flavor = null, fastForward = null, dialogOptions,
+                                advantage = null, disadvantage = null, critical = 20, fumble = 1, targetValue = null,
+                                elvenAccuracy = false, halflingLucky = false, reliableTalent = false,
+                                chatMessage = true, messageData = {}
+                              } = {}) {
 
   // Prepare Message Data
   messageData.flavor = flavor || title;
@@ -110,8 +112,8 @@ export async function d20Roll({parts=[], data={}, event={}, rollMode=null, templ
   let adv = 0;
   fastForward = fastForward ?? (event && (event.shiftKey || event.altKey || event.ctrlKey || event.metaKey));
   if (fastForward) {
-    if ( advantage ?? event.altKey ) adv = 1;
-    else if ( disadvantage ?? (event.ctrlKey || event.metaKey) ) adv = -1;
+    if (advantage ?? event.altKey) adv = 1;
+    else if (disadvantage ?? (event.ctrlKey || event.metaKey)) adv = -1;
   }
 
   // Define the inner roll function
@@ -122,18 +124,22 @@ export async function d20Roll({parts=[], data={}, event={}, rollMode=null, templ
     let mods = halflingLucky ? "r1=1" : "";
 
     // Handle advantage
-    if (adv === 1) {
-      nd = elvenAccuracy ? 3 : 2;
-      messageData.flavor += ` (${game.i18n.localize("DND5E.Advantage")})`;
-      if ( "flags.dnd5e.roll" in messageData ) messageData["flags.dnd5e.roll"].advantage = true;
+    adv += elvenAccuracy ? 1 : 0;
+    // Handle advantage
+    if (adv >= 1) {
+      // nd = elvenAccuracy ? 3 : 2;
+      nd = adv + 1;
+      messageData.flavor += `${adv} (${game.i18n.localize("DND5E.Advantage")})`;
+      if ("flags.dnd5e.roll" in messageData) messageData["flags.dnd5e.roll"].advantage = true;
       mods += "kh";
     }
 
+
     // Handle disadvantage
-    else if (adv === -1) {
-      nd = 2;
+    else if (adv <= -1) {
+      nd = Math.abs(adv) + 1;
       messageData.flavor += ` (${game.i18n.localize("DND5E.Disadvantage")})`;
-      if ( "flags.dnd5e.roll" in messageData ) messageData["flags.dnd5e.roll"].disadvantage = true;
+      if ("flags.dnd5e.roll" in messageData) messageData["flags.dnd5e.roll"].disadvantage = true;
       mods += "kl";
     }
 
@@ -143,7 +149,7 @@ export async function d20Roll({parts=[], data={}, event={}, rollMode=null, templ
     parts.unshift(formula);
 
     // Optionally include a situational bonus
-    if ( form ) {
+    if (form) {
       data['bonus'] = form.bonus.value;
       messageOptions.rollMode = form.rollMode.value;
     }
@@ -175,8 +181,8 @@ export async function d20Roll({parts=[], data={}, event={}, rollMode=null, templ
       if (d.faces === 20) {
         d.options.critical = critical;
         d.options.fumble = fumble;
-        if ( adv === 1 ) d.options.advantage = true;
-        else if ( adv === -1 ) d.options.disadvantage = true;
+        if (adv === 1) d.options.advantage = true;
+        else if (adv === -1) d.options.disadvantage = true;
         if (targetValue) d.options.target = targetValue;
       }
     }
@@ -190,10 +196,18 @@ export async function d20Roll({parts=[], data={}, event={}, rollMode=null, templ
 
   // Create the Roll instance
   const roll = fastForward ? _roll(parts, adv) :
-    await _d20RollDialog({template, title, parts, data, rollMode: messageOptions.rollMode, dialogOptions, roll: _roll});
+               await _d20RollDialog({
+                 template,
+                 title,
+                 parts,
+                 data,
+                 rollMode: messageOptions.rollMode,
+                 dialogOptions,
+                 roll    : _roll
+               });
 
   // Create a Chat Message
-  if ( roll && chatMessage ) roll.toMessage(messageData, messageOptions);
+  if (roll && chatMessage) roll.toMessage(messageData, messageOptions);
   return roll;
 }
 
@@ -204,40 +218,48 @@ export async function d20Roll({parts=[], data={}, event={}, rollMode=null, templ
  * @return {Promise<Roll>}
  * @private
  */
-async function _d20RollDialog({template, title, parts, data, rollMode, dialogOptions, roll}={}) {
+async function _d20RollDialog({template, title, parts, data, rollMode, dialogOptions, roll} = {}) {
 
   // Render modal dialog
   template = template || "systems/dnd5e/templates/chat/roll-dialog.html";
   let dialogData = {
-    formula: parts.join(" + "),
-    data: data,
-    rollMode: rollMode,
+    formula  : parts.join(" + "),
+    data     : data,
+    rollMode : rollMode,
     rollModes: CONFIG.Dice.rollModes,
-    config: CONFIG.DND5E
+    config   : CONFIG.DND5E
   };
   const html = await renderTemplate(template, dialogData);
 
   // Create the Dialog window
   return new Promise(resolve => {
     new Dialog({
-      title: title,
+      title  : title,
       content: html,
       buttons: {
-        advantage: {
-          label: game.i18n.localize("DND5E.Advantage"),
+        superadvantage   : {
+          label   : "Adv+",
+          callback: html => resolve(roll(parts, 2, html[0].querySelector("form")))
+        },
+        advantage        : {
+          label   : game.i18n.localize("DND5E.Advantage"),
           callback: html => resolve(roll(parts, 1, html[0].querySelector("form")))
         },
-        normal: {
-          label: game.i18n.localize("DND5E.Normal"),
+        normal           : {
+          label   : game.i18n.localize("DND5E.Normal"),
           callback: html => resolve(roll(parts, 0, html[0].querySelector("form")))
         },
-        disadvantage: {
-          label: game.i18n.localize("DND5E.Disadvantage"),
+        disadvantage     : {
+          label   : game.i18n.localize("DND5E.Disadvantage"),
+          callback: html => resolve(roll(parts, -1, html[0].querySelector("form")))
+        },
+        superdisadvantage: {
+          label   : "Disadv+",
           callback: html => resolve(roll(parts, -1, html[0].querySelector("form")))
         }
       },
       default: "normal",
-      close: () => resolve(null)
+      close  : () => resolve(null)
     }, dialogOptions).render(true);
   });
 }
@@ -271,9 +293,11 @@ async function _d20RollDialog({template, title, parts, data, rollMode, dialogOpt
  *
  * @return {Promise}              A Promise which resolves once the roll workflow has completed
  */
-export async function damageRoll({parts, actor, data, event={}, rollMode=null, template, title, speaker, flavor,
-  allowCritical=true, critical=false, criticalBonusDice=0, criticalMultiplier=2, fastForward=null,
-  dialogOptions={}, chatMessage=true, messageData={}}={}) {
+export async function damageRoll({
+                                   parts, actor, data, event = {}, rollMode = null, template, title, speaker, flavor,
+                                   allowCritical = true, critical = false, criticalBonusDice = 0, criticalMultiplier = 2, fastForward = null,
+                                   dialogOptions = {}, chatMessage = true, messageData = {}
+                                 } = {}) {
 
   // Prepare Message Data
   messageData.flavor = flavor || title;
@@ -282,10 +306,10 @@ export async function damageRoll({parts, actor, data, event={}, rollMode=null, t
   parts = parts.concat(["@bonus"]);
 
   // Define inner roll function
-  const _roll = function(parts, crit, form) {
+  const _roll = function (parts, crit, form, maximize = false) {
 
     // Optionally include a situational bonus
-    if ( form ) {
+    if (form) {
       data['bonus'] = form.bonus.value;
       messageOptions.rollMode = form.rollMode.value;
     }
@@ -295,22 +319,22 @@ export async function damageRoll({parts, actor, data, event={}, rollMode=null, t
     let roll = new Roll(parts.join("+"), data);
 
     // Modify the damage formula for critical hits
-    if ( crit === true ) {
+    if (crit === true) {
       roll.alter(criticalMultiplier, 0);      // Multiply all dice
-      if ( roll.terms[0] instanceof Die ) {   // Add bonus dice for only the main dice term
+      if (roll.terms[0] instanceof Die) {   // Add bonus dice for only the main dice term
         roll.terms[0].alter(1, criticalBonusDice);
         roll._formula = roll.formula;
       }
       messageData.flavor += ` (${game.i18n.localize("DND5E.Critical")})`;
-      if ( "flags.dnd5e.roll" in messageData ) messageData["flags.dnd5e.roll"].critical = true;
+      if ("flags.dnd5e.roll" in messageData) messageData["flags.dnd5e.roll"].critical = true;
     }
 
     // Execute the roll
     try {
-      roll.evaluate()
-      if ( crit ) roll.dice.forEach(d => d.options.critical = true); // TODO workaround core bug which wipes Roll#options on roll
+      roll.evaluate({maximize});
+      if (crit) roll.dice.forEach(d => d.options.critical = true); // TODO workaround core bug which wipes Roll#options on roll
       return roll;
-    } catch(err) {
+    } catch (err) {
       console.error(err);
       ui.notifications.error(`Dice roll evaluation failed: ${err.message}`);
       return null;
@@ -323,7 +347,7 @@ export async function damageRoll({parts, actor, data, event={}, rollMode=null, t
   });
 
   // Create a Chat Message
-  if ( roll && chatMessage ) roll.toMessage(messageData, messageOptions);
+  if (roll && chatMessage) roll.toMessage(messageData, messageOptions);
   return roll;
 
 }
@@ -335,14 +359,14 @@ export async function damageRoll({parts, actor, data, event={}, rollMode=null, t
  * @return {Promise<Roll>}
  * @private
  */
-async function _damageRollDialog({template, title, parts, data, allowCritical, rollMode, dialogOptions, roll}={}) {
+async function _damageRollDialog({template, title, parts, data, allowCritical, rollMode, dialogOptions, roll} = {}) {
 
   // Render modal dialog
   template = template || "systems/dnd5e/templates/chat/roll-dialog.html";
   let dialogData = {
-    formula: parts.join(" + "),
-    data: data,
-    rollMode: rollMode,
+    formula  : parts.join(" + "),
+    data     : data,
+    rollMode : rollMode,
     rollModes: CONFIG.Dice.rollModes
   };
   const html = await renderTemplate(template, dialogData);
@@ -350,21 +374,25 @@ async function _damageRollDialog({template, title, parts, data, allowCritical, r
   // Create the Dialog window
   return new Promise(resolve => {
     new Dialog({
-      title: title,
+      title  : title,
       content: html,
       buttons: {
-        critical: {
+        critical : {
           condition: allowCritical,
-          label: game.i18n.localize("DND5E.CriticalHit"),
-          callback: html => resolve(roll(parts, true, html[0].querySelector("form")))
+          label    : game.i18n.localize("DND5E.CriticalHit"),
+          callback : html => resolve(roll(parts, true, html[0].querySelector("form")))
         },
-        normal: {
-          label: game.i18n.localize(allowCritical ? "DND5E.Normal" : "DND5E.Roll"),
+        normal   : {
+          label   : game.i18n.localize(allowCritical ? "DND5E.Normal" : "DND5E.Roll"),
           callback: html => resolve(roll(parts, false, html[0].querySelector("form")))
         },
+        maximized: {
+          label   : "Maximized",
+          callback: html => resolve(roll(parts, false, html[0].querySelector("form"), true))
+        }
       },
       default: "normal",
-      close: () => resolve(null)
+      close  : () => resolve(null)
     }, dialogOptions).render(true);
   });
 }
