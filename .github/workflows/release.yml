@@ -2,7 +2,8 @@ name: Release Creation
 
 on: 
   release:
-
+    types:
+      - created
 jobs:
   build:
     runs-on: ubuntu-latest
