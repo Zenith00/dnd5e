@@ -19,7 +19,7 @@ jobs:
       env:
         version: ${{github.event.release.created_at}}
         manifest: https://github.com/${{github.repository}}/releases/latest/download/system.json
-        download: https://github.com/${{github.repository}}/releases/download/${{github.event.release.tag_name}}/module.zip
+        download: https://github.com/${{github.repository}}/releases/download/${{github.event.release.tag_name}}/system.zip
 
     # create a zip file with all files required by the module to add to the release
     - run: zip -r ./system.zip . -x@.github/zip-exclude.lst
