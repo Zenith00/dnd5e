@@ -9,10 +9,14 @@ export const highlightCriticalSuccessFailure = function (message, html, data) {
 
   if (midiRoll) {
 
-    let decisive_threshold = (game.actors.get(message.data.speaker.actor).data?.flags?.dnd5e?.weaponCriticalThreshold || 20) - DECISIVE_RANGE;
-
-    if (midiRoll >= decisive_threshold) {
-      html.find(".dice-total").addClass("decisive");
+    let crit_threshold = (game.actors.get(message.data.speaker.actor).data?.flags?.dnd5e?.weaponCriticalThreshold || 20);
+    if (midiRoll >= (crit_threshold - DECISIVE_RANGE)) {
+      if (midiRoll >= crit_threshold){
+        return;
+      }
+      else {
+        html.find(".dice-total").addClass("decisive");
+      }
     }
   }
 
