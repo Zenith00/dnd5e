@@ -1,30 +1,46 @@
-
 /**
  * Highlight critical success or failure on d20 rolls
  */
-export const highlightCriticalSuccessFailure = function(message, html, data) {
-  if ( !message.isRoll || !message.isContentVisible ) return;
+export const highlightCriticalSuccessFailure = function (message, html, data) {
+  const DECISIVE_RANGE = game.settings.get("dnd5e", "decisiveStrikeRange");
 
+  var midiRoll = message.data?.flags?.["midi-qol"]?.d20AttackRoll;
+
+
+  if (midiRoll) {
+
+    let decisive_threshold = (game.actors.get(message.data.speaker.actor).data?.flags?.dnd5e?.weaponCriticalThreshold || 20) - DECISIVE_RANGE;
+
+    if (midiRoll >= decisive_threshold) {
+      html.find(".dice-total").addClass("decisive");
+    }
+  }
+
+  if (!message.isRoll || !message.isContentVisible) return;
+  console.log("HIGHLIGHT");
   // Highlight rolls where the first part is a d20 roll
   const roll = message.roll;
-  if ( !roll.dice.length ) return;
+  if (!roll.dice.length) return;
   const d = roll.dice[0];
 
   // Ensure it is an un-modified d20 roll
-  const isD20 = (d.faces === 20) && ( d.values.length === 1 );
-  if ( !isD20 ) return;
+  const isD20 = (d.faces === 20) && (d.values.length === 1);
+  if (!isD20) return;
   const isModifiedRoll = ("success" in d.results[0]) || d.options.marginSuccess || d.options.marginFailure;
-  if ( isModifiedRoll ) return;
+  if (isModifiedRoll) return;
 
   // Highlight successes and failures
   const critical = d.options.critical || 20;
   const decisive = critical - 4;
   const fumble = d.options.fumble || 1;
-  if ( d.total >= critical ) html.find(".dice-total").addClass("critical");
-  else if (d.total >= decisive)  html.find(".dice-total").addClass("decisive");
-  else if ( d.total <= fumble ) html.find(".dice-total").addClass("fumble");
-  else if ( d.options.target ) {
-    if ( roll.total >= d.options.target ) html.find(".dice-total").addClass("success");
+  if (d.total >= critical) html.find(".dice-total").addClass("critical");
+  else if (d.total >= decisive) {
+    console.log("ITSCRITICAL");
+    html.find(".dice-total").addClass("decisive");
+  }
+  else if (d.total <= fumble) html.find(".dice-total").addClass("fumble");
+  else if (d.options.target) {
+    if (roll.total >= d.options.target) html.find(".dice-total").addClass("success");
     else html.find(".dice-total").addClass("failure");
   }
 };
@@ -34,22 +50,22 @@ export const highlightCriticalSuccessFailure = function(message, html, data) {
 /**
  * Optionally hide the display of chat card action buttons which cannot be performed by the user
  */
-export const displayChatActionButtons = function(message, html, data) {
+export const displayChatActionButtons = function (message, html, data) {
   const chatCard = html.find(".dnd5e.chat-card");
-  if ( chatCard.length > 0 ) {
+  if (chatCard.length > 0) {
     const flavor = html.find(".flavor-text");
-    if ( flavor.text() === html.find(".item-name").text() ) flavor.remove();
+    if (flavor.text() === html.find(".item-name").text()) flavor.remove();
 
     // If the user is the message author or the actor owner, proceed
     let actor = game.actors.get(data.message.speaker.actor);
-    if ( actor && actor.owner ) return;
-    else if ( game.user.isGM || (data.author.id === game.user.id)) return;
+    if (actor && actor.owner) return;
+    else if (game.user.isGM || (data.author.id === game.user.id)) return;
 
     // Otherwise conceal action buttons except for saving throw
     const buttons = chatCard.find("button[data-action]");
     buttons.each((i, btn) => {
-      if ( btn.dataset.action === "save" ) return;
-      btn.style.display = "none"
+      if (btn.dataset.action === "save") return;
+      btn.style.display = "none";
     });
   }
 };
@@ -65,35 +81,35 @@ export const displayChatActionButtons = function(message, html, data) {
  *
  * @return {Array}              The extended options Array including new context choices
  */
-export const addChatMessageContextOptions = function(html, options) {
+export const addChatMessageContextOptions = function (html, options) {
   let canApply = li => {
     const message = game.messages.get(li.data("messageId"));
     return message?.isRoll && message?.isContentVisible && canvas?.tokens.controlled.length;
   };
   options.push(
     {
-      name: game.i18n.localize("DND5E.ChatContextDamage"),
-      icon: '<i class="fas fa-user-minus"></i>',
+      name     : game.i18n.localize("DND5E.ChatContextDamage"),
+      icon     : '<i class="fas fa-user-minus"></i>',
       condition: canApply,
-      callback: li => applyChatCardDamage(li, 1)
+      callback : li => applyChatCardDamage(li, 1)
     },
     {
-      name: game.i18n.localize("DND5E.ChatContextHealing"),
-      icon: '<i class="fas fa-user-plus"></i>',
+      name     : game.i18n.localize("DND5E.ChatContextHealing"),
+      icon     : '<i class="fas fa-user-plus"></i>',
       condition: canApply,
-      callback: li => applyChatCardDamage(li, -1)
+      callback : li => applyChatCardDamage(li, -1)
     },
     {
-      name: game.i18n.localize("DND5E.ChatContextDoubleDamage"),
-      icon: '<i class="fas fa-user-injured"></i>',
+      name     : game.i18n.localize("DND5E.ChatContextDoubleDamage"),
+      icon     : '<i class="fas fa-user-injured"></i>',
       condition: canApply,
-      callback: li => applyChatCardDamage(li, 2)
+      callback : li => applyChatCardDamage(li, 2)
     },
     {
-      name: game.i18n.localize("DND5E.ChatContextHalfDamage"),
-      icon: '<i class="fas fa-user-shield"></i>',
+      name     : game.i18n.localize("DND5E.ChatContextHalfDamage"),
+      icon     : '<i class="fas fa-user-shield"></i>',
       condition: canApply,
-      callback: li => applyChatCardDamage(li, 0.5)
+      callback : li => applyChatCardDamage(li, 0.5)
     }
   );
   return options;

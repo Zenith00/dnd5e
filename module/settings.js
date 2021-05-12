@@ -58,6 +58,15 @@ export const registerSystemSettings = function() {
     type: Boolean
   });
 
+  game.settings.register("dnd5e", "decisiveStrikeRange", {
+    name: "SETTINGS.5eDecisiveRangeN",
+    hint: "SETTINGS.5eDecisiveRangeL",
+    scope: "world",
+    config: true,
+    default: "1",
+    type: Number
+  });
+
   /**
    * Require Currency Carrying Weight
    */
