@@ -19,5 +19,5 @@ jobs:
       with:
         source_repo: "https://gitlab.com/foundrynet/dnd5e.git"
         source_branch: "master"
-        destination_branch: "master"
+        destination_branch: "upstream"
         github_token: ${{ secrets.GIT_AT }}
