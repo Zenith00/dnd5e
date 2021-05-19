@@ -6,3 +6,4 @@
 * Add decisive strike coloring
 * Add hit dice as consumable resource
 * Add resources 4-12
+* Add ability score selection dropdown for skill checks
