@@ -21,7 +21,6 @@ export const highlightCriticalSuccessFailure = function (message, html, data) {
   }
 
   if (!message.isRoll || !message.isContentVisible) return;
-  console.log("HIGHLIGHT");
   // Highlight rolls where the first part is a d20 roll
   const roll = message.roll;
   if (!roll.dice.length) return;
@@ -39,7 +38,6 @@ export const highlightCriticalSuccessFailure = function (message, html, data) {
   const fumble = d.options.fumble || 1;
   if (d.total >= critical) html.find(".dice-total").addClass("critical");
   else if (d.total >= decisive) {
-    console.log("ITSCRITICAL");
     html.find(".dice-total").addClass("decisive");
   }
   else if (d.total <= fumble) html.find(".dice-total").addClass("fumble");
