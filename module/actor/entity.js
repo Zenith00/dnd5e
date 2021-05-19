@@ -674,9 +674,8 @@ export default class Actor5e extends Actor {
     const bonuses = getProperty(this.data.data, "bonuses.abilities") || {};
 
     // Compose roll parts and data
-    const parts = ["@mod"];
-    const data = {mod: skl.mod + skl.prof, defaultSkillId:skl["ability"], abilities:this.data.data.abilities};
-
+    const parts = ["@mod", "@prof"];
+    const data = {mod: skl.mod, defaultSkillId:skl["ability"], abilities:this.data.data.abilities, prof:this.data.data.skills[skillId].prof};
     // Ability test bonus
     if ( bonuses.check ) {
       data["checkBonus"] = bonuses.check;
