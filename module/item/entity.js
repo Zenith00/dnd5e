@@ -1159,6 +1159,7 @@ export default class Item5e extends Item {
     if (abl) {
       const ability = rollData.abilities[abl];
       rollData["mod"] = ability.mod || 0;
+      rollData["defaultAbilityScore"] = abl;
     }
 
     // Include a proficiency score

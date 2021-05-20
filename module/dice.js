@@ -367,7 +367,8 @@ async function _damageRollDialog({template, title, parts, data, allowCritical, r
     formula  : parts.join(" + "),
     data     : data,
     rollMode : rollMode,
-    rollModes: CONFIG.Dice.rollModes
+    rollModes: CONFIG.Dice.rollModes,
+    config   : CONFIG.DND5E
   };
   const html = await renderTemplate(template, dialogData);
 
