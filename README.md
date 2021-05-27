@@ -7,3 +7,4 @@
 * Add hit dice as consumable resource
 * Add resources 4-12
 * Add ability score selection dropdown for skill checks and damage rolls
+* Remove critical/decisive coloring for skill checks

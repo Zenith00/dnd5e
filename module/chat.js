@@ -36,9 +36,11 @@ export const highlightCriticalSuccessFailure = function (message, html, data) {
   const critical = d.options.critical || 20;
   const decisive = critical - 4;
   const fumble = d.options.fumble || 1;
-  if (d.total >= critical) html.find(".dice-total").addClass("critical");
-  else if (d.total >= decisive) {
-    html.find(".dice-total").addClass("decisive");
+  if (message.data.flags?.dnd5e?.roll?.type !== "skill") {
+    if (d.total >= critical) html.find(".dice-total").addClass("critical");
+    else if (d.total >= decisive) {
+      html.find(".dice-total").addClass("decisive");
+    }
   }
   else if (d.total <= fumble) html.find(".dice-total").addClass("fumble");
   else if (d.options.target) {
