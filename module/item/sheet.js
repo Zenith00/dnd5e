@@ -123,6 +123,14 @@ export default class ItemSheet5e extends ItemSheet {
         return obj;
       }, {});
     }
+    else if (consume.type === "hitDice") {
+      return actor.items.filter(
+        i => i.data.type === "class"
+      ).reduce((obj, i) => {
+        obj[i.name] = `${i.name} (${i.data.data.hitDice})`;
+        return obj;
+      }, {})
+    }
 
     // Charges
     else if ( consume.type === "charges" ) {
