@@ -622,7 +622,7 @@ export default class Item5e extends Item {
     }
 
     // Verify that a consumed resource is available
-    if (!resource) {
+    if ( resource === undefined ) {
       ui.notifications.warn(game.i18n.format("DND5E.ConsumeWarningNoSource", {name: this.name, type: typeLabel}));
       return false;
     }
@@ -666,7 +666,7 @@ export default class Item5e extends Item {
     // Render the chat card template
     const token = this.actor.token;
     const templateData = {
-      actor: this.actor,
+      actor: this.actor.data,
       tokenId: token?.uuid || null,
       item: this.data,
       data: this.getChatData(),
@@ -684,8 +684,8 @@ export default class Item5e extends Item {
 
     // Create the ChatMessage data object
     const chatData = {
-      user   : game.user._id,
-      type   : CONST.CHAT_MESSAGE_TYPES.OTHER,
+      user: game.user.data._id,
+      type: CONST.CHAT_MESSAGE_TYPES.OTHER,
       content: html,
       flavor : this.data.data.chatFlavor || this.name,
       speaker: ChatMessage.getSpeaker({actor: this.actor, token}),
@@ -909,7 +909,7 @@ export default class Item5e extends Item {
     }
 
     // Compose roll options
-    const rollConfig = mergeObject({
+    let rollConfig = mergeObject({
       parts        : parts,
       actor        : this.actor,
       data         : rollData,
@@ -921,7 +921,9 @@ export default class Item5e extends Item {
         top  : options.event ? options.event.clientY - 80 : null,
         left : window.innerWidth - 710
       },
-      messageData  : {"flags.dnd5e.roll": {type: "attack", itemId: this.id}}
+      messageData  : {"flags.dnd5e.roll": {type: "attack", itemId: this.id}},
+      speaker: ChatMessage.getSpeaker({actor: this.actor})
+
     }, options);
     rollConfig.event = options.event;
 
@@ -940,6 +942,9 @@ export default class Item5e extends Item {
 
     // Apply Halfling Lucky
     if (flags.halflingLucky) rollConfig.halflingLucky = true;
+
+    // Compose calculated roll options with passed-in roll options 
+    rollConfig = mergeObject(rollConfig, options)
 
     // Invoke the d20 roll helper
     const roll = await d20Roll(rollConfig);
@@ -1001,9 +1006,12 @@ export default class Item5e extends Item {
     }
 
     // Scale damage from up-casting spells
-    if ((this.data.type === "spell")) {
-      if ((itemData.scaling.mode === "cantrip")) {
-        const level = this.actor.data.type === "character" ? actorData.details.level : actorData.details.spellLevel;
+    if ( (this.data.type === "spell") ) {
+      if ( (itemData.scaling.mode === "cantrip") ) {
+        let level;
+        if ( this.actor.type === "character" ) level = actorData.details.level;
+        else if ( itemData.preparation.mode === "innate" ) level = Math.ceil(actorData.details.cr);
+        else level = actorData.details.spellLevel;
         this._scaleCantripDamage(parts, itemData.scaling.formula, level, rollData);
       }
       else if (spellLevel && (itemData.scaling.mode === "level") && itemData.scaling.formula) {

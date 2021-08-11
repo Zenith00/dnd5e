@@ -28,7 +28,7 @@ export default class Actor5e extends Actor {
    */
   get classes() {
     if ( this._classes !== undefined ) return this._classes;
-    if ( this.data.type !== "character" ) return this._classes = {};
+    if ( !["character", "npc"].includes(this.data.type) ) return this._classes = {};
     return this._classes = this.items.filter((item) => item.type === "class").reduce((obj, cls) => {
       obj[cls.name.slugify({strict: true})] = cls;
       return obj;
@@ -51,6 +51,7 @@ export default class Actor5e extends Actor {
 
   /** @override */
   prepareData() {
+    this._preparationWarnings = [];
     super.prepareData();
 
     // iterate over owned items and recompute attributes that depend on prepared actor data
@@ -61,6 +62,7 @@ export default class Actor5e extends Actor {
 
   /** @override */
   prepareBaseData() {
+    this._prepareBaseArmorClass(this.data);
     switch ( this.data.type ) {
       case "character":
         return this._prepareCharacterData(this.data);
@@ -69,6 +71,16 @@ export default class Actor5e extends Actor {
       case "vehicle":
         return this._prepareVehicleData(this.data);
     }
+  }
+
+  /* --------------------------------------------- */
+
+  /** @override */
+  applyActiveEffects() {
+    // The Active Effects do not have access to their parent at preparation time so we wait until this stage to
+    // determine whether they are suppressed or not.
+    this.effects.forEach(e => e.determineSuppression());
+    return super.applyActiveEffects();
   }
 
   /* -------------------------------------------- */
@@ -144,6 +156,12 @@ export default class Actor5e extends Actor {
 
     // Prepare spell-casting data
     this._computeSpellcastingProgression(this.data);
+
+    // Prepare armor class data
+    const ac = this._computeArmorClass(data);
+    this.armor = ac.equippedArmor || null;
+    this.shield = ac.equippedShield || null;
+    if ( ac.warnings ) this._preparationWarnings.push(...ac.warnings);
   }
 
   /* -------------------------------------------- */
@@ -396,6 +414,21 @@ export default class Actor5e extends Actor {
   /* -------------------------------------------- */
 
   /**
+   * Initialize derived AC fields for Active Effects to target.
+   * @param actorData
+   * @private
+   */
+  _prepareBaseArmorClass(actorData) {
+    const ac = actorData.data.attributes.ac;
+    ac.base = 10;
+    ac.shield = ac.bonus = ac.cover = 0;
+    this.armor = null;
+    this.shield = null;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Prepare data related to the spell-casting capabilities of the Actor
    * @private
    */
@@ -484,6 +517,102 @@ export default class Actor5e extends Actor {
   /* -------------------------------------------- */
 
   /**
+   * Determine a character's AC value from their equipped armor and shield.
+   * @param {object} data      Note that this object will be mutated.
+   * @return {{
+   *   calc: string,
+   *   value: number,
+   *   base: number,
+   *   shield: number,
+   *   bonus: number,
+   *   cover: number,
+   *   flat: number,
+   *   equippedArmor: Item5e,
+   *   equippedShield: Item5e,
+   *   warnings: string[]
+   * }}
+   * @private
+   */
+  _computeArmorClass(data) {
+
+    // Get AC configuration and apply automatic migrations for older data structures
+    const ac = data.attributes.ac;
+    ac.warnings = [];
+    let cfg = CONFIG.DND5E.armorClasses[ac.calc];
+    if ( !cfg ) {
+      ac.calc = "flat";
+      if ( Number.isNumeric(ac.value) ) ac.flat = Number(ac.value);
+      cfg = CONFIG.DND5E.armorClasses.flat;
+    }
+
+    // Identify Equipped Items
+    const armorTypes = new Set(Object.keys(CONFIG.DND5E.armorTypes));
+    const {armors, shields} = this.itemTypes.equipment.reduce((obj, equip) => {
+      const armor = equip.data.data.armor;
+      if ( !equip.data.data.equipped || !armorTypes.has(armor?.type) ) return obj;
+      if ( armor.type === "shield" ) obj.shields.push(equip);
+      else obj.armors.push(equip);
+      return obj;
+    }, {armors: [], shields: []});
+
+    // Determine base AC
+    switch ( ac.calc ) {
+
+      // Flat AC (no additional bonuses)
+      case "flat":
+        ac.value = ac.flat;
+        return ac;
+
+      // Natural AC (includes bonuses)
+      case "natural":
+        ac.base = ac.flat;
+        break;
+
+      // Equipment-based AC
+      case "default":
+        if ( armors.length ) {
+          if ( armors.length > 1 ) ac.warnings.push("DND5E.WarnMultipleArmor");
+          const armorData = armors[0].data.data.armor;
+          const isHeavy = armorData.type === "heavy";
+          ac.dex = isHeavy ? 0 : Math.min(armorData.dex ?? Infinity, data.abilities.dex.mod);
+          ac.base = (armorData.value ?? 0) + ac.dex;
+          ac.equippedArmor = armors[0];
+        } else {
+          ac.dex = data.abilities.dex.mod;
+          ac.base = 10 + ac.dex;
+        }
+        break;
+
+      // Formula-based AC
+      default:
+        let formula = ac.calc === "custom" ? ac.formula : cfg.formula;
+        const rollData = this.getRollData();
+        try {
+          const replaced = Roll.replaceFormulaData(formula, rollData);
+          ac.base = Roll.safeEval(replaced);
+        } catch (err) {
+          ac.warnings.push("DND5E.WarnBadACFormula");
+          const replaced = Roll.replaceFormulaData(CONFIG.DND5E.armorClasses.default.formula, rollData);
+          ac.base = Roll.safeEval(replaced);
+        }
+        break;
+    }
+
+    // Equipped Shield
+    if ( shields.length ) {
+      if ( shields.length > 1 ) ac.warnings.push("DND5E.WarnMultipleShields");
+      ac.shield = shields[0].data.data.armor.value ?? 0;
+      ac.equippedShield = shields[0];
+    }
+
+    // Compute total AC and return
+    ac.value = ac.base + ac.shield + ac.bonus + ac.cover;
+    return ac;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Compute the level and percentage of encumbrance for an Actor.
    *
    * Optionally include the weight of carried currency across all denominations by applying the standard rule
@@ -507,7 +636,12 @@ export default class Actor5e extends Actor {
     if ( game.settings.get("dnd5e", "currencyWeight") && actorData.data.currency ) {
       const currency = actorData.data.currency;
       const numCoins = Object.values(currency).reduce((val, denom) => val += Math.max(denom, 0), 0);
-      weight += numCoins / CONFIG.DND5E.encumbrance.currencyPerWeight;
+
+      const currencyPerWeight = game.settings.get("dnd5e", "metricWeightUnits")
+        ? CONFIG.DND5E.encumbrance.currencyPerWeight.metric
+        : CONFIG.DND5E.encumbrance.currencyPerWeight.imperial
+
+      weight += numCoins / currencyPerWeight;
     }
 
     // Determine the encumbrance size class
@@ -523,9 +657,14 @@ export default class Actor5e extends Actor {
 
     // Compute Encumbrance percentage
     weight = weight.toNearest(0.1);
-    const max = actorData.data.abilities.str.value * CONFIG.DND5E.encumbrance.strMultiplier * mod;
+
+    const strengthMultiplier = game.settings.get("dnd5e", "metricWeightUnits")
+      ? CONFIG.DND5E.encumbrance.strMultiplier.metric
+      : CONFIG.DND5E.encumbrance.strMultiplier.imperial
+
+    const max = (actorData.data.abilities.str.value * strengthMultiplier * mod).toNearest(0.1);
     const pct = Math.clamped((weight * 100) / max, 0, 100);
-    return { value: weight.toNearest(0.1), max, pct, encumbered: pct > (2/3) };
+    return { value: weight.toNearest(0.1), max, pct, encumbered: pct > (200/3) };
   }
 
   /* -------------------------------------------- */
@@ -535,7 +674,10 @@ export default class Actor5e extends Actor {
   /** @inheritdoc */
   async _preCreate(data, options, user) {
     await super._preCreate(data, options, user);
+    const sourceId = this.getFlag("core", "sourceId");
+    if ( sourceId?.startsWith("Compendium.") ) return;
 
+    // Some sensible defaults for convenience
     // Token size category
     const s = CONFIG.DND5E.tokenSizes[this.data.data.traits.size || "med"];
     this.data.token.update({width: s, height: s});
@@ -839,6 +981,7 @@ export default class Actor5e extends Actor {
     // Evaluate a global saving throw bonus
     const parts = [];
     const data = {};
+    const speaker = options.speaker || ChatMessage.getSpeaker({actor: this});
 
     // Diamond Soul adds proficiency
     if ( this.getFlag("dnd5e", "diamondSoul") ) {
@@ -861,7 +1004,7 @@ export default class Actor5e extends Actor {
       halflingLucky: this.getFlag("dnd5e", "halflingLucky"),
       targetValue: 10,
       messageData: {
-        speaker: options.speaker || ChatMessage.getSpeaker({actor: this}),
+        speaker: speaker,
         "flags.dnd5e.roll": {type: "death"}
       }
     });
@@ -993,6 +1136,7 @@ export default class Actor5e extends Actor {
    * @property {number} dhd                  Hit dice recovered or spent during the rest.
    * @property {object} updateData           Updates applied to the actor.
    * @property {Array.<object>} updateItems  Updates applied to actor's items.
+   * @property {boolean} longRest            Whether the rest type was a long rest.
    * @property {boolean} newDay              Whether a new day occurred during the rest.
    */
 
@@ -1094,7 +1238,8 @@ export default class Actor5e extends Actor {
         ...hitDiceUpdates,
         ...this._getRestItemUsesRecovery({ recoverLongRestUses: longRest, recoverDailyUses: newDay })
       ],
-      newDay: newDay
+      longRest,
+      newDay
     }
 
     // Perform updates
@@ -1103,6 +1248,9 @@ export default class Actor5e extends Actor {
 
     // Display a Chat Message summarizing the rest effects
     if ( chat ) await this._displayRestResultMessage(result, longRest);
+
+    // Call restCompleted hook so that modules can easily perform actions when actors finish a rest
+    Hooks.callAll("restCompleted", this, result);
 
     // Return data summarizing the rest effects
     return result;
@@ -1396,16 +1544,16 @@ export default class Actor5e extends Actor {
     d.data.attributes.exhaustion = o.data.attributes.exhaustion; // Keep your prior exhaustion level
     d.data.attributes.inspiration = o.data.attributes.inspiration; // Keep inspiration
     d.data.spells = o.data.spells; // Keep spell slots
+    d.data.attributes.ac.flat = target.data.data.attributes.ac.value; // Override AC
 
     // Token appearance updates
     d.token = {name: d.name};
     for ( let k of ["width", "height", "scale", "img", "mirrorX", "mirrorY", "tint", "alpha", "lockRotation"] ) {
       d.token[k] = source.token[k];
     }
-    if ( !keepVision ) {
-      for ( let k of ['dimSight', 'brightSight', 'dimLight', 'brightLight', 'vision', 'sightAngle'] ) {
-        d.token[k] = source.token[k];
-      }
+    const vision = keepVision ? o.token : source.token;
+    for ( let k of ['dimSight', 'brightSight', 'dimLight', 'brightLight', 'vision', 'sightAngle'] ) {
+      d.token[k] = vision[k];
     }
     if ( source.token.randomImg ) {
       const images = await target.getTokenImages();
@@ -1590,6 +1738,45 @@ export default class Actor5e extends Actor {
     }
     if (typeData.subtype) type = `${type} (${typeData.subtype})`;
     return type;
+  }
+
+  /* -------------------------------------------- */
+
+  /*
+   * Populate a proficiency object with a `selected` field containing a combination of
+   * localizable group & individual proficiencies from `value` and the contents of `custom`.
+   *
+   * @param {object} data                Object containing proficiency data
+   * @param {Array.<string>} data.value  Array of standard proficiency keys
+   * @param {string} data.custom         Semicolon-separated string of custom proficiencies
+   * @param {string} type                "armor", "weapon", or "tool"
+   */
+  static prepareProficiencies(data, type) {
+    const profs = CONFIG.DND5E[`${type}Proficiencies`];
+    const itemTypes = CONFIG.DND5E[`${type}Ids`];
+
+    let values = [];
+    if ( data.value ) {
+      values = data.value instanceof Array ? data.value : [data.value];
+    }
+
+    data.selected = {};
+    const pack = game.packs.get(CONFIG.DND5E.sourcePacks.ITEMS);
+    for ( const key of values ) {
+      if ( profs[key] ) {
+        data.selected[key] = profs[key];
+      } else if ( itemTypes && itemTypes[key] ) {
+        const item = pack.index.get(itemTypes[key]);
+        data.selected[key] = item.name;
+      } else if ( type === "tool" && CONFIG.DND5E.vehicleTypes[key] ) {
+        data.selected[key] = CONFIG.DND5E.vehicleTypes[key];
+      }
+    }
+
+    // Add custom entries
+    if ( data.custom ) {
+      data.custom.split(";").forEach((c, i) => data.selected[`custom${i+1}`] = c.trim());
+    }
   }
 
   /* -------------------------------------------- */
