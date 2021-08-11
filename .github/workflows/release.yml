@@ -17,7 +17,7 @@ jobs:
       with:
         files: 'system.json'
       env:
-        version: ${{github.event.release.created_at}}
+        version: 100.${{github.event.release.created_at}}
         manifest: https://github.com/${{github.repository}}/releases/latest/download/system.json
         download: https://github.com/${{github.repository}}/releases/download/${{github.event.release.tag_name}}/system.zip
 
