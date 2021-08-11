@@ -260,7 +260,8 @@ DND5E.abilityConsumptionTypes = {
   "ammo": "DND5E.ConsumeAmmunition",
   "attribute": "DND5E.ConsumeAttribute",
   "material": "DND5E.ConsumeMaterial",
-  "charges": "DND5E.ConsumeCharges"
+  "charges": "DND5E.ConsumeCharges",
+  "hitDice":"DND5e.ConsumeHitDice"
 };
 
 

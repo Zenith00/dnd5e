@@ -70,7 +70,7 @@ function _isUnsupportedTerm(term) {
 	const operator = term instanceof OperatorTerm && ["+", "-"].includes(term.operator);
 	const number   = term instanceof NumericTerm;
 
-	return !(diceTerm || operator || number);
+  return !(diceTerm || operator || number);
 }
 
 /* -------------------------------------------- */

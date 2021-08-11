@@ -1513,6 +1513,11 @@
 .dice-roll .dice-total.critical {
   color: green;
 }
+
+.dice-roll .dice-total.decisive  {
+   color: blue;
+ }
+
 .dice-roll .dice-total.fumble {
   color: red;
 }
