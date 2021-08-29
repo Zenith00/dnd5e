@@ -34,7 +34,7 @@ export const highlightCriticalSuccessFailure = function (message, html, data) {
 
   // Highlight successes and failures
   const critical = d.options.critical || 20;
-  const decisive = critical - game.settings.get("decisiveStrikeRange");
+  const decisive = critical - game.settings.get("dnd5e","decisiveStrikeRange");
   const fumble = d.options.fumble || 1;
   if (message.data.flags?.dnd5e?.roll?.type !== "skill") {
     if (d.total >= critical) html.find(".dice-total").addClass("critical");

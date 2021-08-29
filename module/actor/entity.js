@@ -448,16 +448,23 @@ export default class Actor5e extends Actor {
     const progression = {
       total: 0,
       slot: 0,
-      pact: 0
+      pact: 0,
     };
 
     // Keep track of the last seen caster in case we're in a single-caster situation.
     let caster = null;
 
+    let usesSpellPoints = this.getFlag("dnd5e", "spellPoints");
     // Tabulate the total spell-casting progression
     const classes = this.data.items.filter(i => i.type === "class");
     for ( let cls of classes ) {
       const d = cls.data.data;
+      if (cls.data.name === "Sorcerer" && usesSpellPoints) {
+        ad.resources["fourth"].max = CONFIG.DND5E.spellPointTotals[d.levels]
+        ad.resources["fourth"].label = "Spell Points";
+        ad.resources["fourth"].lr = true;
+        d.spellcasting.progression = "spellPoints";
+      }
       if ( d.spellcasting.progression === "none" ) continue;
       const levels = d.levels;
       const prog = d.spellcasting.progression;
@@ -473,6 +480,7 @@ export default class Actor5e extends Actor {
         case 'full': progression.slot += levels; break;
         case 'artificer': progression.slot += Math.ceil(levels / 2); break;
         case 'pact': progression.pact += levels; break;
+        case 'spellPoints': break;
       }
     }
 

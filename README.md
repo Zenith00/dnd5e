@@ -10,8 +10,13 @@
 * Add ability score selection dropdown for skill checks and damage rolls
 * Remove critical/decisive coloring for skill checks
 * Expose @attributes to skill check rolls
-
+* Add spell points <for sorcerers only :)>
+* 
 # Foundry Virtual Tabletop - DnD5e Game System
+
+This game system for [Foundry Virtual Tabletop](http://foundryvtt.com) provides character sheet and game system 
+support for the Fifth Edition of the world's most popular roleplaying game.
+
 This system is offered and may be used under the terms of the Open Gaming License v1.0a and its accompanying
 [Systems Reference Document 5.1 (SRD5)](http://media.wizards.com/2016/downloads/DND/SRD-OGL_V5.1.pdf).
 

@@ -411,12 +411,13 @@ export default class ActorSheet5e extends ActorSheet {
       return max;
     }, 0);
 
+    let spellPoints = this.actor.getFlag("dnd5e", "spellPoints");
     // Level-based spellcasters have cantrips and leveled slots
     if ( maxLevel > 0 ) {
       registerSection("spell0", 0, CONFIG.DND5E.spellLevels[0]);
       for (let lvl = 1; lvl <= maxLevel; lvl++) {
         const sl = `spell${lvl}`;
-        registerSection(sl, lvl, CONFIG.DND5E.spellLevels[lvl], levels[sl]);
+        registerSection(sl, lvl, spellPoints ? CONFIG.DND5E.spellPointCosts[lvl] : CONFIG.DND5E.spellLevels[lvl], levels[sl]);
       }
     }
 

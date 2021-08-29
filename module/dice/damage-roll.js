@@ -132,11 +132,16 @@ export default class DamageRoll extends Roll {
           critical: {
             condition: allowCritical,
             label: game.i18n.localize("DND5E.CriticalHit"),
-            callback: html => resolve(this._onDialogSubmit(html, true))
+            callback: html => resolve(this._onDialogSubmit(html, true, false))
+          },
+          maximized: {
+            condition: allowCritical,
+            label: "Maximized",
+            callback: html => resolve(this._onDialogSubmit(html, false, true))
           },
           normal: {
             label: game.i18n.localize(allowCritical ? "DND5E.Normal" : "DND5E.Roll"),
-            callback: html => resolve(this._onDialogSubmit(html, false))
+            callback: html => resolve(this._onDialogSubmit(html, false, false))
           }
         },
         default: defaultCritical ? "critical" : "normal",
@@ -151,9 +156,10 @@ export default class DamageRoll extends Roll {
    * Handle submission of the Roll evaluation configuration Dialog
    * @param {jQuery} html             The submitted dialog content
    * @param {boolean} isCritical      Is the damage a critical hit?
+   * @param {boolean} isMaximized
    * @private
    */
-  _onDialogSubmit(html, isCritical) {
+  _onDialogSubmit(html, isCritical, isMaximized) {
     const form = html[0].querySelector("form");
 
     // Append a situational bonus term
@@ -165,6 +171,7 @@ export default class DamageRoll extends Roll {
 
     // Apply advantage or disadvantage
     this.options.critical = isCritical;
+    this.options.maximized = isMaximized;
     this.options.rollMode = form.rollMode.value;
     this.configureDamage();
     return this;

@@ -261,7 +261,7 @@ DND5E.abilityConsumptionTypes = {
   "attribute": "DND5E.ConsumeAttribute",
   "material": "DND5E.ConsumeMaterial",
   "charges": "DND5E.ConsumeCharges",
-  "hitDice":"DND5e.ConsumeHitDice"
+  "hitDice":"DND5E.ConsumeHitDice"
 };
 
 
@@ -857,6 +857,53 @@ DND5E.spellLevels = {
   9: "DND5E.SpellLevel9"
 };
 
+DND5E.spellPointCosts = {
+    1:"2 spell points",
+    2:"3 spell points",
+    3:"5 spell points",
+    4:"6 spell points",
+    5:"7 spell points",
+    6:"9 spell points",
+    7:"10 spell points",
+    8:"11 spell points",
+    9:"13 spell points",
+}
+
+DND5E.spellPointCostsRaw = {
+    1:2,
+    2:3,
+    3:5,
+    4:6,
+    5:7,
+    6:9,
+    7:10,
+    8:11,
+    9:13,
+}
+
+DND5E.spellPointTotals = {
+  1: 4,
+  2: 6 + 2,
+  3: 14 + 3,
+  4: 17 + 4,
+  5: 27 + 5,
+  6: 32 + 6,
+  7: 38 + 7,
+  8: 44 + 8,
+  9: 57 + 9,
+  10: 64 + 10,
+  11: 73 + 11,
+  12: 73 + 12,
+  13: 83 + 13,
+  14: 83 + 14,
+  15: 94 + 15,
+  16: 94 + 16,
+  17: 107 + 17,
+  18: 114 + 18,
+  19: 123 + 19,
+  20: 133 + 20
+}
+
 // Spell Scroll Compendium UUIDs
 DND5E.spellScrollIds = {
   0: "rQ6sO7HDWzqMhSI3",
@@ -1025,6 +1072,12 @@ DND5E.characterFlags = {
   "diamondSoul": {
     name: "DND5E.FlagsDiamondSoul",
     hint: "DND5E.FlagsDiamondSoulHint",
+    section: "DND5E.Feats",
+    type: Boolean
+  },
+  "spellPoints": {
+    name: "Spell Points",
+    hint: "Use Spell Points instead of Spell Slots (Sorcerers only)",
     section: "DND5E.Feats",
     type: Boolean
   },

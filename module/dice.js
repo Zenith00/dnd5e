@@ -243,7 +243,7 @@ export async function damageRoll({
   }
 
   // Evaluate the configured roll
-  await roll.evaluate({async: true});
+  await roll.evaluate({async: true, maximize: roll.options.maximized});
 
   // Create a Chat Message
   if ( speaker ) {

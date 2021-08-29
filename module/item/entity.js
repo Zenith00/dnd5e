@@ -436,24 +436,29 @@ export default class Item5e extends Item {
     let consumeUsage = !!uses.per;              // Consume limited uses
     let consumeQuantity = uses.autoDestroy;     // Consume quantity of the item in lieu of uses
     let consumeSpellLevel = null;               // Consume a specific category of spell slot
-    if ( requireSpellSlot ) consumeSpellLevel = id.preparation.mode === "pact" ? "pact" : `spell${id.level}`;
+    let consumeSpellPoints = false;
 
+    if ( requireSpellSlot ) consumeSpellLevel = id.preparation.mode === "pact" ? "pact" : `spell${id.level}`;
     // Display a configuration dialog to customize the usage
     const needsConfiguration = createMeasuredTemplate || consumeRecharge || consumeResource || consumeSpellSlot || consumeUsage;
     if (configureDialog && needsConfiguration) {
       const configuration = await AbilityUseDialog.create(this);
       if (!configuration) return;
-
       // Determine consumption preferences
       createMeasuredTemplate = Boolean(configuration.placeTemplate);
       consumeUsage = Boolean(configuration.consumeUse);
       consumeRecharge = Boolean(configuration.consumeRecharge);
       consumeResource = Boolean(configuration.consumeResource);
       consumeSpellSlot = Boolean(configuration.consumeSlot);
-
       // Handle spell upcasting
       if ( requireSpellSlot ) {
-        consumeSpellLevel = configuration.level === "pact" ? "pact" : `spell${configuration.level}`;
+        let spellCost = configuration.level.split(";");
+        if (spellCost[0] === "pact"){
+          consumeSpellLevel = "pact"
+        } else {
+          consumeSpellLevel = spellCost[0];
+          consumeSpellPoints = Boolean(spellCost[1]);
+        }
         if ( consumeSpellSlot === false ) consumeSpellLevel = null;
         const upcastLevel = configuration.level === "pact" ? ad.spells.pact.level : parseInt(configuration.level);
         if (upcastLevel !== id.level) {
@@ -465,7 +470,7 @@ export default class Item5e extends Item {
     }
 
     // Determine whether the item can be used by testing for resource consumption
-    const usage = item._getUsageUpdates({consumeRecharge, consumeResource, consumeSpellLevel, consumeUsage, consumeQuantity});
+    const usage = item._getUsageUpdates({consumeRecharge, consumeResource, consumeSpellLevel, consumeSpellPoints, consumeUsage, consumeQuantity});
     if ( !usage ) return;
     const {actorUpdates, itemUpdates, resourceUpdates} = usage;
 
@@ -498,11 +503,11 @@ export default class Item5e extends Item {
    * @param {boolean} consumeResource     Whether the item consumes a limited resource
    * @param {string|null} consumeSpellLevel The category of spell slot to consume, or null
    * @param {boolean} consumeUsage        Whether the item consumes a limited usage
+   * @param {boolean} consumeSpellPoints  Use spell points instead of spell slots
    * @returns {object|boolean}            A set of data changes to apply when the item is used, or false
    * @private
    */
-  _getUsageUpdates({consumeQuantity, consumeRecharge, consumeResource, consumeSpellLevel, consumeUsage}) {
-
+  _getUsageUpdates({consumeQuantity, consumeRecharge, consumeResource, consumeSpellLevel, consumeSpellPoints, consumeUsage}) {
     // Reference item data
     const id = this.data.data;
     const actorUpdates = {};
@@ -527,15 +532,21 @@ export default class Item5e extends Item {
 
     // Consume Spell Slots
     if ( consumeSpellLevel ) {
-      if ( Number.isNumeric(consumeSpellLevel) ) consumeSpellLevel = `spell${consumeSpellLevel}`;
+      if (Number.isNumeric(consumeSpellLevel)) consumeSpellLevel = `spell${consumeSpellLevel}`;
       const level = this.actor?.data.data.spells[consumeSpellLevel];
       const spells = Number(level?.value ?? 0);
-      if ( spells === 0 ) {
+      const remainingSpellPoints = this.actor?.data.data.resources["fourth"]?.value || 0;
+      const spellPointCost = CONFIG.DND5E.spellPointCostsRaw[Number(consumeSpellLevel.substring("spell".length))];
+      if (spells === 0 && !(consumeSpellPoints && (remainingSpellPoints >= spellPointCost))) {
         const label = game.i18n.localize(consumeSpellLevel === "pact" ? "DND5E.SpellProgPact" : `DND5E.SpellLevel${id.level}`);
         ui.notifications.warn(game.i18n.format("DND5E.SpellCastNoSlots", {name: this.name, level: label}));
         return false;
       }
-      actorUpdates[`data.spells.${consumeSpellLevel}.value`] = Math.max(spells - 1, 0);
+      if (consumeSpellPoints){
+        actorUpdates['data.resources.fourth.value'] = remainingSpellPoints - spellPointCost;
+      } else {
+        actorUpdates[`data.spells.${consumeSpellLevel}.value`] = Math.max(spells - 1, 0);
+      }
     }
 
     // Consume Limited Usage
@@ -922,7 +933,6 @@ export default class Item5e extends Item {
         left : window.innerWidth - 710
       },
       messageData  : {"flags.dnd5e.roll": {type: "attack", itemId: this.id}},
-      speaker: ChatMessage.getSpeaker({actor: this.actor})
 
     }, options);
     rollConfig.event = options.event;
