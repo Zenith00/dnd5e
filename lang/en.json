@@ -804,5 +804,13 @@
   "SETTINGS.5eRestEpic": "Epic Heroism (LR: 1 hour, SR: 1 min)",
   "SETTINGS.5eUndoChanges": "Undo Changes",
   "SETTINGS.5eMetricN": "Use Metric Weight Units",
-  "SETTINGS.5eMetricL": "Replaces all reference to lbs with kgs and updates the encumberance calculations to use metric weight units."
+  "SETTINGS.5eMetricL": "Replaces all reference to lbs with kgs and updates the encumberance calculations to use metric weight units.",
+  "SETTINGS.5eDecisiveRangeL": "Expanded range for Decisive Strikes",
+  "SETTINGS.5eDecisiveRangeN": "Decisive Strike Range",
+  "DND5E.MediumRest": "Medium Rest",
+  "DND5E.MediumRestNormal": "Medium Rest (8 hours)",
+  "DND5E.MediumRestHint": "Take a medium rest? On a medium rest you heal and may recover primary or secondary resources.",
+  "DND5E.MediumRestResult": "{name} takes a medium rest and recovers {health} Hit Points.",
+  "DND5E.MediumRestResultShort": "{name} takes a medium rest.",
+  "DND5E.MediumRestResultHitPoints": "{name} takes a medium rest and recovers {health} Hit Points."
 }
