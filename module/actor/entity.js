@@ -874,7 +874,11 @@ export default class Actor5e extends Actor {
 
     // Construct parts
     const parts = ["@mod"];
-    const data = {mod: abl.mod};
+    const data = {
+      mod: abl.mod,
+      defaultAbility: abilityId,
+      abilities: this.data.data.abilities,
+    };
 
     // Add feat-related proficiency bonuses
     const feats = this.data.flags.dnd5e || {};
@@ -901,13 +905,14 @@ export default class Actor5e extends Actor {
 
     // Roll and return
     const rollData = foundry.utils.mergeObject(options, {
-      parts: parts,
-      data: data,
-      title: game.i18n.format("DND5E.AbilityPromptTitle", {ability: label}),
-      halflingLucky: feats.halflingLucky,
-      messageData: {
-        speaker: options.speaker || ChatMessage.getSpeaker({actor: this}),
-        "flags.dnd5e.roll": {type: "ability", abilityId }
+      parts         : parts,
+      data          : data,
+      title         : game.i18n.format("DND5E.AbilityPromptTitle", {ability: label}),
+      halflingLucky : feats.halflingLucky,
+      chooseModifier: true,
+      messageData   : {
+        speaker           : options.speaker || ChatMessage.getSpeaker({actor: this}),
+        "flags.dnd5e.roll": {type: "ability", abilityId}
       }
     });
     return d20Roll(rollData);
@@ -922,7 +927,7 @@ export default class Actor5e extends Actor {
    * @param {Object} options      Options which configure how ability tests are rolled
    * @return {Promise<Roll>}      A Promise which resolves to the created Roll instance
    */
-  rollAbilitySave(abilityId, options={}) {
+  rollAbilitySave(abilityId, options = {}) {
     const label = CONFIG.DND5E.abilities[abilityId];
     const abl = this.data.data.abilities[abilityId];
 
@@ -1200,6 +1205,28 @@ export default class Actor5e extends Actor {
     return this._rest(chat, newDay, true);
   }
 
+  /**
+   * Take a long rest, recovering hit points, hit dice, resources, item uses, and spell slots.
+   *
+   * @param {object} [options]
+   * @param {boolean} [options.dialog=true]  Present a confirmation dialog window whether or not to take a long rest.
+   * @param {boolean} [options.chat=true]    Summarize the results of the rest workflow as a chat message.
+   * @param {boolean} [options.newDay=true]  Whether the long rest carries over to a new day.
+   * @return {Promise.<RestResult>}          A Promise which resolves once the long rest workflow has completed.
+   */
+  async mediumRest({dialog = true, chat = true, newDay = false} = {}) {
+    // Maybe present a confirmation dialog
+    if (dialog) {
+      try {
+        newDay = await MediumRestDialog.mediumRestDialog({actor: this});
+      } catch (err) {
+        return;
+      }
+    }
+
+    return this._rest(chat, newDay, false, true);
+  }
+
   /* -------------------------------------------- */
 
   /**
@@ -1208,12 +1235,13 @@ export default class Actor5e extends Actor {
    * @param {boolean} chat           Summarize the results of the rest workflow as a chat message.
    * @param {boolean} newDay         Has a new day occurred during this rest?
    * @param {boolean} longRest       Is this a long rest?
+   * @param {boolean} mediumRest               Is this a medium rest?
    * @param {number} [dhd=0]         Number of hit dice spent during so far during the rest.
    * @param {number} [dhp=0]         Number of hit points recovered so far during the rest.
    * @return {Promise.<RestResult>}  Consolidated results of the rest workflow.
    * @private
    */
-  async _rest(chat, newDay, longRest, dhd=0, dhp=0) {
+  async _rest(chat, newDay, longRest, mediumRest=false, dhd = 0, dhp = 0) {
     let hitPointsRecovered = 0;
     let hitPointUpdates = {};
     let hitDiceRecovered = 0;
@@ -1223,6 +1251,10 @@ export default class Actor5e extends Actor {
     if ( longRest ) {
       ({ updates: hitPointUpdates, hitPointsRecovered } = this._getRestHitPointRecovery());
       ({ updates: hitDiceUpdates, hitDiceRecovered } = this._getRestHitDiceRecovery());
+    }
+
+    if (mediumRest){
+      ({updates: hitPointUpdates, hitPointsRecovered} = this._getRestHitPointRecovery());
     }
 
     // Figure out the rest of the changes
@@ -1247,7 +1279,7 @@ export default class Actor5e extends Actor {
     await this.updateEmbeddedDocuments("Item", result.updateItems);
 
     // Display a Chat Message summarizing the rest effects
-    if ( chat ) await this._displayRestResultMessage(result, longRest);
+    if (chat) await this._displayRestResultMessage(result, longRest, mediumRest);
 
     // Call restCompleted hook so that modules can easily perform actions when actors finish a rest
     Hooks.callAll("restCompleted", this, result);
@@ -1263,14 +1295,15 @@ export default class Actor5e extends Actor {
    *
    * @param {RestResult} result         Result of the rest operation.
    * @param {boolean} [longRest=false]  Is this a long rest?
+   * @param mediumRest
    * @return {Promise.<ChatMessage>}    Chat message that was created.
    * @protected
    */
-  async _displayRestResultMessage(result, longRest=false) {
-    const { dhd, dhp, newDay } = result;
+  async _displayRestResultMessage(result, longRest = false, mediumRest=false) {
+    const {dhd, dhp, newDay} = result;
     const diceRestored = dhd !== 0;
     const healthRestored = dhp !== 0;
-    const length = longRest ? "Long" : "Short";
+    const length = longRest ? "Long" : (mediumRest ? "Medium" : "Short");
 
     let restFlavor, message;
 
