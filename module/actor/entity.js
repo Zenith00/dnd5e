@@ -1,9 +1,10 @@
-import { d20Roll, damageRoll } from "../dice.js";
-import SelectItemsPrompt from "../apps/select-items-prompt.js";
-import ShortRestDialog from "../apps/short-rest.js";
-import LongRestDialog from "../apps/long-rest.js";
-import {DND5E} from '../config.js';
-import Item5e from "../item/entity.js";
+import {d20Roll, damageRoll} from "../dice.js";
+import SelectItemsPrompt     from "../apps/select-items-prompt.js";
+import ShortRestDialog  from "../apps/short-rest.js";
+import MediumRestDialog from "../apps/medium-rest.js";
+import LongRestDialog   from "../apps/long-rest.js";
+import {DND5E}               from '../config.js';
+import Item5e                from "../item/entity.js";
 
 /**
  * Extend the base Actor class to implement additional system-specific logic.
@@ -20,6 +21,7 @@ export default class Actor5e extends Actor {
 
   /* -------------------------------------------- */
   /*  Properties                                  */
+
   /* -------------------------------------------- */
 
   /**
@@ -785,7 +787,7 @@ export default class Actor5e extends Actor {
    * @param {Object} options      Options which configure how the skill check is rolled
    * @return {Promise<Roll>}      A Promise which resolves to the created Roll instance
    */
-  rollSkill(skillId, options={}) {
+  rollSkill(skillId, options = {}) {
     const skl = this.data.data.skills[skillId];
     const bonuses = getProperty(this.data.data, "bonuses.abilities") || {};
 
@@ -824,6 +826,7 @@ export default class Actor5e extends Actor {
       data: data,
       title: game.i18n.format("DND5E.SkillPromptTitle", {skill: CONFIG.DND5E.skills[skillId]}),
       halflingLucky: this.getFlag("dnd5e", "halflingLucky"),
+      chooseModifier: true,
       reliableTalent: reliableTalent,
       messageData: {
         speaker: options.speaker || ChatMessage.getSpeaker({actor: this}),
@@ -1832,9 +1835,9 @@ export default class Actor5e extends Actor {
    * @param {Event} event   The originating user interaction which triggered the cast
    * @deprecated since dnd5e 1.2.0
    */
-  async useSpell(item, {configureDialog=true}={}) {
+  async useSpell(item, {configureDialog = true} = {}) {
     console.warn(`The Actor5e#useSpell method has been deprecated in favor of Item5e#roll`);
-    if ( item.data.type !== "spell" ) throw new Error("Wrong Item type");
+    if (item.data.type !== "spell") throw new Error("Wrong Item type");
     return item.roll();
   }
 }
