@@ -29,7 +29,9 @@ export default class D20Roll extends Roll {
   static ADV_MODE = {
     NORMAL: 0,
     ADVANTAGE: 1,
+    SUPERADVANTAGE: 2,
     DISADVANTAGE: -1,
+    SUPERDISADVANTAGE: -2,
   }
 
   /**
@@ -56,6 +58,22 @@ export default class D20Roll extends Roll {
     return this.options.advantageMode === D20Roll.ADV_MODE.DISADVANTAGE;
   }
 
+  /**
+   * A convenience reference for whether this D20Roll has advantage
+   * @type {boolean}
+   */
+  get hasSuperAdvantage() {
+    return this.options.advantageMode === D20Roll.ADV_MODE.SUPERADVANTAGE;
+  }
+
+  /**
+   * A convenience reference for whether this D20Roll has disadvantage
+   * @type {boolean}
+   */
+  get hasSuperDisadvantage() {
+    return this.options.advantageMode === D20Roll.ADV_MODE.SUPERDISADVANTAGE;
+  }
+
   /* -------------------------------------------- */
   /*  D20 Roll Methods                            */
   /* -------------------------------------------- */
@@ -80,8 +98,19 @@ export default class D20Roll extends Roll {
       d20.modifiers.push("kh");
       d20.options.advantage = true;
     }
+    else if (this.hasSuperAdvantage) {
+      d20.number = this.options.elvenAccuracy ? 4 : 3;
+      d20.modifiers.push("kh");
+      d20.options.advantage = true;
+    }
+
     else if ( this.hasDisadvantage ) {
       d20.number = 2;
+      d20.modifiers.push("kl");
+      d20.options.disadvantage = true;
+    }
+    else if ( this.hasSuperDisadvantage ) {
+      d20.number = 3;
       d20.modifiers.push("kl");
       d20.options.disadvantage = true;
     }
@@ -89,6 +118,7 @@ export default class D20Roll extends Roll {
 
     // Assign critical and fumble thresholds
     if ( this.options.critical ) d20.options.critical = this.options.critical;
+    if ( this.options.decisive ) d20.options.decisive = this.options.decisive;
     if ( this.options.fumble ) d20.options.fumble = this.options.fumble;
     if ( this.options.targetValue ) d20.options.target = this.options.targetValue;
 
@@ -162,8 +192,12 @@ export default class D20Roll extends Roll {
         title,
         content,
         buttons: {
+          superadvantage: {
+            label: "Adv+",
+            callback: html => resolve(this._onDialogSubmit(html, D20Roll.ADV_MODE.SUPERADVANTAGE))
+          },
           advantage: {
-            label: game.i18n.localize("DND5E.Advantage"),
+            label: "Adv",
             callback: html => resolve(this._onDialogSubmit(html, D20Roll.ADV_MODE.ADVANTAGE))
           },
           normal: {
@@ -171,8 +205,12 @@ export default class D20Roll extends Roll {
             callback: html => resolve(this._onDialogSubmit(html, D20Roll.ADV_MODE.NORMAL))
           },
           disadvantage: {
-            label: game.i18n.localize("DND5E.Disadvantage"),
+            label: "Disadv",
             callback: html => resolve(this._onDialogSubmit(html, D20Roll.ADV_MODE.DISADVANTAGE))
+          },
+          superdisadvantage: {
+            label: "Disadv+",
+            callback: html => resolve(this._onDialogSubmit(html, D20Roll.ADV_MODE.SUPERDISADVANTAGE))
           }
         },
         default: defaultButton,
