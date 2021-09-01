@@ -1265,7 +1265,7 @@ export default class Actor5e extends Actor {
     }
 
     if (mediumRest){
-      ({updates: hitPointUpdates, hitPointsRecovered} = this._getRestHitPointRecovery());
+      ({updates: hitPointUpdates, hitPointsRecovered} = this._getRestHitPointRecovery({recoverTemp: true, recoverTempMax: true, healHalf:true}));
     }
 
     // Figure out the rest of the changes
@@ -1379,7 +1379,7 @@ export default class Actor5e extends Actor {
    * @return {object)                                Updates to the actor and change in hit points.
    * @protected
    */
-  _getRestHitPointRecovery({ recoverTemp=true, recoverTempMax=true }={}) {
+  _getRestHitPointRecovery({ recoverTemp=true, recoverTempMax=true, healHalf = false}={}) {
     const data = this.data.data;
     let updates = {};
     let max = data.attributes.hp.max;
@@ -1389,7 +1389,12 @@ export default class Actor5e extends Actor {
     } else {
       max += data.attributes.hp.tempmax;
     }
-    updates["data.attributes.hp.value"] = max;
+    if (healHalf) {
+      updates["data.attributes.hp.value"] = Math.max(data.attributes.hp.value, Math.floor(max/2));
+    } else {
+      updates["data.attributes.hp.value"] = max;
+
+    }
     if ( recoverTemp ) {
       updates["data.attributes.hp.temp"] = 0;
     }
