@@ -96,7 +96,7 @@ Hooks.once("init", function() {
   registerSystemSettings();
 
   // Patch Core Functions
-  CONFIG.Combat.initiative.formula = "1d20 + @attributes.init.mod + @attributes.init.prof + @attributes.init.bonus";
+  CONFIG.Combat.initiative.formula = `1d${game.settings.get("dnd5e", "initiativeDice")} + @attributes.init.mod + @attributes.init.prof + @attributes.init.bonus`;
   Combatant.prototype._getInitiativeFormula = _getInitiativeFormula;
 
   // Register Roll Extensions

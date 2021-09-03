@@ -58,6 +58,15 @@ export const registerSystemSettings = function() {
     type: Boolean
   });
 
+  game.settings.register("dnd5e", "initiativeDice", {
+    name: "Initiative Dice",
+    hint: "Dice face for initiative rolls",
+    scope: "world",
+    config: true,
+    default: "20",
+    type: Number
+  })
+
   game.settings.register("dnd5e", "decisiveStrikeRange", {
     name: "SETTINGS.5eDecisiveRangeN",
     hint: "SETTINGS.5eDecisiveRangeL",

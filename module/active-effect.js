@@ -43,6 +43,7 @@ export default class ActiveEffect5e extends ActiveEffect {
    * @param {Actor|Item} owner      The owning entity which manages this effect
    */
   static onManageActiveEffect(event, owner) {
+    console.log("MANAGE!!");
     event.preventDefault();
     const a = event.currentTarget;
     const li = a.closest("li");
