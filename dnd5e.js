@@ -94,9 +94,10 @@ Hooks.once("init", function() {
 
   // Register System Settings
   registerSystemSettings();
+  console.log("SEEET INITIATIVE FORMULA!!!!!!!!!!!!!!!!!!!!")
 
   // Patch Core Functions
-  CONFIG.Combat.initiative.formula = `1d${game.settings.get("dnd5e", "initiativeDice")} + @attributes.init.mod + @attributes.init.prof + @attributes.init.bonus`;
+  CONFIG.Combat.initiative.formula = `1d12 + @attributes.init.mod + @attributes.init.prof + @attributes.init.bonus`;
   Combatant.prototype._getInitiativeFormula = _getInitiativeFormula;
 
   // Register Roll Extensions
@@ -186,7 +187,7 @@ Hooks.once("ready", function() {
 
   // Determine whether a system migration is required and feasible
   if ( !game.user.isGM ) return;
-  const currentVersion = game.settings.get("dnd5e", "systemMigrationVersion");
+  const currentVersion = "1.4.2";// game.settings.get("dnd5e", "systemMigrationVersion");
   const NEEDS_MIGRATION_VERSION = "1.4.2";
   const COMPATIBLE_MIGRATION_VERSION = 0.80;
   const totalDocuments = game.actors.size + game.scenes.size + game.items.size;

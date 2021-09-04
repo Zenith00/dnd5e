@@ -6,10 +6,12 @@
  * See Combat._getInitiativeFormula for more detail.
  */
 export const _getInitiativeFormula = function() {
-  const actor = this.actor;
-  if ( !actor ) return "1d20";
-  const init = actor.data.data.attributes.init;
+  console.log("GETTING INITIATIVE FORMULA!!!!!!!!!!!!!!!!!!!!")
   let diceBase = game.settings.get("dnd5e", "initiativeDice");
+
+  const actor = this.actor;
+  if ( !actor ) return `1d${diceBase}`;
+  const init = actor.data.data.attributes.init;
   // Construct initiative formula parts
   let nd = 1;
   let mods = "";
@@ -19,7 +21,8 @@ export const _getInitiativeFormula = function() {
     mods += "kh";
   }
   const parts = [`${nd}d${diceBase}${mods}`, init.mod, (init.prof !== 0) ? init.prof : null, (init.bonus !== 0) ? init.bonus : null];
-
+  console.log("PARTS!!!")
+  console.log(parts);
   // Optionally apply Dexterity tiebreaker
   const tiebreaker = game.settings.get("dnd5e", "initiativeDexTiebreaker");
   if ( tiebreaker ) parts.push(actor.data.data.abilities.dex.value / 100);

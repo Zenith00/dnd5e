@@ -457,7 +457,8 @@ export default class Item5e extends Item {
           consumeSpellLevel = "pact"
         } else {
           consumeSpellLevel = spellCost[0];
-          consumeSpellPoints = Boolean(spellCost[1]);
+          consumeSpellPoints = spellCost[1] === "true";
+
         }
         if ( consumeSpellSlot === false ) consumeSpellLevel = null;
         const upcastLevel = configuration.level === "pact" ? ad.spells.pact.level : parseInt(configuration.level);
@@ -537,6 +538,10 @@ export default class Item5e extends Item {
       const spells = Number(level?.value ?? 0);
       const remainingSpellPoints = this.actor?.data.data.resources["fourth"]?.value || 0;
       const spellPointCost = CONFIG.DND5E.spellPointCostsRaw[Number(consumeSpellLevel.substring("spell".length))];
+
+      console.log("Spells!");
+      console.log(spells);
+      console.log(consumeSpellPoints);
       if (spells === 0 && !(consumeSpellPoints && (remainingSpellPoints >= spellPointCost))) {
         const label = game.i18n.localize(consumeSpellLevel === "pact" ? "DND5E.SpellProgPact" : `DND5E.SpellLevel${id.level}`);
         ui.notifications.warn(game.i18n.format("DND5E.SpellCastNoSlots", {name: this.name, level: label}));

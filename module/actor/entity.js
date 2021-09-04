@@ -1189,7 +1189,7 @@ export default class Actor5e extends Actor {
       await this.autoSpendHitDice({ threshold: autoHDThreshold });
     }
 
-    return this._rest(chat, newDay, false, this.data.data.attributes.hd - hd0, this.data.data.attributes.hp.value - hp0);
+    return this._rest(chat, newDay, false, false,this.data.data.attributes.hd - hd0, this.data.data.attributes.hp.value - hp0);
   }
 
   /* -------------------------------------------- */
@@ -1257,7 +1257,8 @@ export default class Actor5e extends Actor {
     let hitPointUpdates = {};
     let hitDiceRecovered = 0;
     let hitDiceUpdates = [];
-
+    console.log("Medium rest!")
+    console.log(mediumRest)
     // Recover hit points & hit dice on long rest
     if ( longRest ) {
       ({ updates: hitPointUpdates, hitPointsRecovered } = this._getRestHitPointRecovery());

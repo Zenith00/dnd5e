@@ -135,7 +135,6 @@ export default class DamageRoll extends Roll {
             callback: html => resolve(this._onDialogSubmit(html, true, false))
           },
           maximized: {
-            condition: allowCritical,
             label: "Maximized",
             callback: html => resolve(this._onDialogSubmit(html, false, true))
           },
