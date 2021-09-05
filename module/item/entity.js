@@ -941,7 +941,7 @@ export default class Item5e extends Item {
 
     }, options);
     rollConfig.event = options.event;
-
+    delete options.event;
     // Expanded critical hit thresholds
     if ((this.data.type === "weapon") && flags.weaponCriticalThreshold) {
       rollConfig.critical = parseInt(flags.weaponCriticalThreshold);
@@ -958,7 +958,7 @@ export default class Item5e extends Item {
     // Apply Halfling Lucky
     if (flags.halflingLucky) rollConfig.halflingLucky = true;
 
-    // Compose calculated roll options with passed-in roll options 
+    // Compose calculated roll options with passed-in roll options
     rollConfig = mergeObject(rollConfig, options)
 
     // Invoke the d20 roll helper

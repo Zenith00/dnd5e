@@ -181,7 +181,7 @@ Hooks.once("setup", function() {
  * Once the entire VTT framework is initialized, check to see if we should perform a data migration
  */
 Hooks.once("ready", function() {
-
+  game.system.data.verison = "1.4.2";
   // Wait to register hotbar drop hook on ready so that modules could register earlier if they want to
   Hooks.on("hotbarDrop", (bar, data, slot) => macros.create5eMacro(data, slot));
 
@@ -238,3 +238,4 @@ Hooks.on('getActorDirectoryEntryContext', Actor5e.addDirectoryContextOptions);
 Handlebars.registerHelper('getProperty', function (data, property) {
   return getProperty(data, property);
 });
+
