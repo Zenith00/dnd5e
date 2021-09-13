@@ -803,7 +803,7 @@ export default class Actor5e extends Actor {
     const parts = ["@mod", "@prof"];
     const data = {
       mod: skl.mod,
-      defaultAbilityScore:skl["ability"],
+      defaultAbility:skl["ability"],
       abilities:this.data.data.abilities,
       prof:this.data.data.skills[skillId].prof,
       attributes: this.data.data.attributes
@@ -835,6 +835,7 @@ export default class Actor5e extends Actor {
       title: game.i18n.format("DND5E.SkillPromptTitle", {skill: CONFIG.DND5E.skills[skillId]}),
       halflingLucky: this.getFlag("dnd5e", "halflingLucky"),
       chooseModifier: true,
+      defaultAbility: data.defaultAbility,
       reliableTalent: reliableTalent,
       messageData: {
         speaker: options.speaker || ChatMessage.getSpeaker({actor: this}),
@@ -918,6 +919,7 @@ export default class Actor5e extends Actor {
     const rollData = foundry.utils.mergeObject(options, {
       parts         : parts,
       data          : data,
+      defaultAbility: data.defaultAbility,
       title         : game.i18n.format("DND5E.AbilityPromptTitle", {ability: label}),
       halflingLucky : feats.halflingLucky,
       chooseModifier: true,
