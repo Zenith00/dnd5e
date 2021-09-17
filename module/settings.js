@@ -67,6 +67,15 @@ export const registerSystemSettings = function() {
     type: Number
   })
 
+    game.settings.register("dnd5e", "forceSecretDeathSave", {
+    name: "Secret Death Saves",
+    hint: "Force Death Saves to be GM-Only Whispers",
+    scope: "world",
+    config: true,
+    default: false,
+    type: Boolean
+  })
+
   game.settings.register("dnd5e", "decisiveStrikeRange", {
     name: "SETTINGS.5eDecisiveRangeN",
     hint: "SETTINGS.5eDecisiveRangeL",

@@ -1014,6 +1014,8 @@ export default class Actor5e extends Actor {
       data.saveBonus = bonuses.save;
     }
 
+    const whisperTargets = isWhisper ? game.users.entities.filter(u => u.isGM) : [];
+    const whisperSave = game.settings.get("dnd5e", "forceSecretDeathSave");
     // Evaluate the roll
     const rollData = foundry.utils.mergeObject(options, {
       parts: parts,
@@ -1023,6 +1025,7 @@ export default class Actor5e extends Actor {
       targetValue: 10,
       messageData: {
         speaker: speaker,
+        whisper: whisperSave ? whisperTargets : [],
         "flags.dnd5e.roll": {type: "death"}
       }
     });
