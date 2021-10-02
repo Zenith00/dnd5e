@@ -196,6 +196,7 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
 
     // Short and Long Rest
     html.find('.short-rest').click(this._onShortRest.bind(this));
+    html.find('.medium-rest').click(this._onMediumRest.bind(this))
     html.find('.long-rest').click(this._onLongRest.bind(this));
 
     // Rollable sheet actions
@@ -265,6 +266,12 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
     event.preventDefault();
     await this._onSubmit(event);
     return this.actor.longRest();
+  }
+
+  async _onMediumRest(event) {
+    event.preventDefault();
+    await this._onSubmit(event);
+    return this.actor.mediumRest();
   }
 
   /* -------------------------------------------- */

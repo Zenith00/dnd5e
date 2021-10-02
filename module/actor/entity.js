@@ -320,6 +320,11 @@ export default class Actor5e extends Actor {
 
     // Character proficiency bonus
     data.attributes.prof = Math.floor((level + 7) / 4);
+    data.attributes.martialLevel = Math.floor(
+      [... Object.values(this.classes)].reduce((p, c) => p + DND5E.computeMartialLevel(c), 0)
+    )
+    data.attributes.martialChar = data.attributes.martialLevel >= Math.floor(((2/3)*data.details.level))
+    data.attributes.martialProf =Math.floor((data.attributes.martialLevel + 7) / 4);
 
     // Experience required for next level
     const xp = data.details.xp;
@@ -1269,9 +1274,10 @@ export default class Actor5e extends Actor {
       ({ updates: hitPointUpdates, hitPointsRecovered } = this._getRestHitPointRecovery());
       ({ updates: hitDiceUpdates, hitDiceRecovered } = this._getRestHitDiceRecovery());
     }
-
+    let hdUpdates = {};
     if (mediumRest){
       ({updates: hitPointUpdates, hitPointsRecovered} = this._getRestHitPointRecovery({recoverTemp: true, recoverTempMax: true, healHalf:true}));
+      hdUpdates = ({"data.attributes.exhaustion": this.data.data.attributes.exhaustion-2});
     }
 
     // Figure out the rest of the changes
@@ -1279,6 +1285,7 @@ export default class Actor5e extends Actor {
       dhd: dhd + hitDiceRecovered,
       dhp: dhp + hitPointsRecovered,
       updateData: {
+        ...hdUpdates,
         ...hitPointUpdates,
         ...this._getRestResourceRecovery({ recoverShortRestResources: !longRest, recoverLongRestResources: longRest }),
         ...this._getRestSpellRecovery({ recoverSpells: longRest })

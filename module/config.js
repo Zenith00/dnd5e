@@ -1162,3 +1162,21 @@ DND5E.characterFlags = {
 
 // Configure allowed status flags
 DND5E.allowedActorFlags = ["isPolymorphed", "originalActor"].concat(Object.keys(DND5E.characterFlags));
+
+DND5E.computeMartialLevel = (classItem) => {
+  // console.log("Computing martial level: ");
+  // console.log(classItem);
+  if (["Ranger","Paladin","Artificer"].includes(classItem.data.name)){
+    return Math.floor(classItem.data.levels / 2);
+  } else if (["Barbarian", "Monk"].includes(classItem.data.name)){
+    return classItem.data.data.levels;
+  } else if (
+      (classItem.data.name === "Fighter" && classItem.data.data.subclass === "Eldritch Knight")
+      || (classItem.data.name === "Rogue" && classItem.data.data.subclass === "Arcane Trickster")) {
+    return Math.floor(classItem.data.levels * (2/3));
+  } else if (["Fighter","Rogue"].includes(classItem.data.name)) {
+    return classItem.data.data.levels;
+  } else {
+    return 0;
+  }
+}

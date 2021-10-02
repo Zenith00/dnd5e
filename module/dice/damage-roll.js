@@ -114,14 +114,20 @@ export default class DamageRoll extends Roll {
    * @param {object} options                  Additional Dialog customization options
    * @returns {Promise<D20Roll|null>}         A resulting D20Roll object constructed with the dialog, or null if the dialog was closed
    */
-  async configureDialog({title, defaultRollMode, defaultCritical=false, template, allowCritical=true}={}, options={}) {
-
+  async configureDialog({title, defaultRollMode, defaultCritical=false, template, allowCritical=true, allowPowerAttack = false, powerAttackFormula="" }={}, options={}) {
+    console.log(allowPowerAttack);
+    const powerAttack = allowPowerAttack ? {powerAttack: false} : {}
+    console.log(powerAttack)
     // Render the Dialog inner HTML
     const content = await renderTemplate(template ?? this.constructor.EVALUATION_TEMPLATE, {
       formula: `${this.formula} + @bonus`,
       defaultRollMode,
       rollModes: CONFIG.Dice.rollModes,
+      options: powerAttack,
+      i18n: {powerAttack:"Power Attack"},
     });
+
+    console.log(content);
 
     // Create the Dialog window and await submission of the form
     return new Promise(resolve => {
@@ -144,6 +150,7 @@ export default class DamageRoll extends Roll {
           }
         },
         default: defaultCritical ? "critical" : "normal",
+        template: template ?? this.constructor.EVALUATION_TEMPLATE,
         close: () => resolve(null)
       }, options).render(true);
     });
@@ -171,7 +178,11 @@ export default class DamageRoll extends Roll {
     // Apply advantage or disadvantage
     this.options.critical = isCritical;
     this.options.maximized = isMaximized;
+    console.log(form);
+    console.log(form.rollMode);
+    console.log(form.powerAttack);
     this.options.rollMode = form.rollMode.value;
+    this.options.powerAttack = html[0].querySelector("#powerAttack").checked;
     this.configureDamage();
     return this;
   }

@@ -11,7 +11,7 @@
 * Remove critical/decisive coloring for skill checks
 * Expose @attributes to skill check rolls
 * Add spell points <for sorcerers only :)>
-* 
+* Power attacks
 # Foundry Virtual Tabletop - DnD5e Game System
 
 This game system for [Foundry Virtual Tabletop](http://foundryvtt.com) provides character sheet and game system 

@@ -15,6 +15,16 @@
         <label>{{ localize "DND5E.RollSituationalBonus" }}</label>
         <input type="text" name="bonus" value="" placeholder="{{ localize 'DND5E.RollExample' }}"/>
     </div>
+    {{#each i18n}}
+        <div class="form-group">
+            <label>
+                {{this}}
+            </label>
+<!--            <label class="" for="{{@key}}">-->
+                <input type="checkbox" id="{{@key}}" name="{{@key}}" {{checked (lookup ../options @key)}}>
+<!--            </label>-->
+        </div>
+    {{/each}}
     <div class="form-group">
         <label>{{ localize "DND5E.RollMode" }}</label>
         <select name="rollMode">

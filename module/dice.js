@@ -187,6 +187,7 @@ function _determineAdvantageMode({event, advantage=false, disadvantage=false, fa
  * @param {string[]} parts          The dice roll component parts, excluding the initial d20
  * @param {object} [data]           Actor or item data against which to parse the roll
  *
+ * @param actor
  * @param {boolean} [critical=false] Flag this roll as a critical hit for the purposes of fast-forward or default dialog action
  * @param {number} [criticalBonusDice=0] A number of bonus damage dice that are added for critical hits
  * @param {number} [criticalMultiplier=2] A critical hit multiplier which is applied to critical hits
@@ -210,7 +211,7 @@ function _determineAdvantageMode({event, advantage=false, disadvantage=false, fa
  */
 export async function damageRoll({
   parts=[], data, // Roll creation
-  critical=false, criticalBonusDice, criticalMultiplier, multiplyNumeric, powerfulCritical, // Damage customization
+  actor = {}, critical=false, criticalBonusDice, criticalMultiplier, multiplyNumeric, powerfulCritical, // Damage customization
   fastForward=false, event, allowCritical=true, template, title, dialogOptions, // Dialog configuration
   chatMessage=true, messageData={}, rollMode, speaker, flavor, // Chat Message customization
   }={}) {
@@ -221,7 +222,7 @@ export async function damageRoll({
   // Construct the DamageRoll instance
   const formula = parts.join(" + ");
   const {isCritical, isFF} = _determineCriticalMode({critical, fastForward, event});
-  const roll = new CONFIG.Dice.DamageRoll(formula, data, {
+  let roll = new CONFIG.Dice.DamageRoll(formula, data, {
     flavor: flavor || title,
     critical: isCritical,
     criticalBonusDice,
@@ -229,7 +230,30 @@ export async function damageRoll({
     multiplyNumeric,
     powerfulCritical
   });
+  console.log(data);
+  console.log(actor);
+  const allowPowerAttack = (data.item.weaponType === "martialM" || data.item.weaponType === "martialR") && actor.data.data.attributes.martialChar;
+  console.log(allowPowerAttack);
+  let powerAttackFormula = "";
+  if (allowPowerAttack){
+    if (data.item.weaponType === "martialM"){
+      if (data.item.properties.two && !data.item.properties.rch) {
+        powerAttackFormula = "1d8 + @attributes.martialProf";
+      } else if (data.item.properties.two && data.item.properties.rch){
+        powerAttackFormula = "1d6 + @attributes.martialProf";
+      } else if (!data.item.properties.lgt) {
+        powerAttackFormula = "1d4 + @attributes.martialProf";
+      }
+    } else {
+      if (data.item.properties.hvy && data.item.properties.lod) {
+        powerAttackFormula = "1d6 + @attributes.martialProf";
+      } else if (data.item.properties.hvy && !data.item.properties.lod) {
+        powerAttackFormula = "1d4 + @attributes.martialProf";
+      }
+    }
 
+
+  }
   // Prompt a Dialog to further configure the DamageRoll
   if ( !isFF ) {
     const configured = await roll.configureDialog({
@@ -237,11 +261,18 @@ export async function damageRoll({
       defaultRollMode: defaultRollMode,
       defaultCritical: isCritical,
       template,
-      allowCritical
+      allowCritical,
+      allowPowerAttack,
+      powerAttackFormula,
     }, dialogOptions);
     if ( configured === null ) return null;
   }
 
+  console.log("ROLL COFNIGURED");
+  console.log(roll);
+  if (roll.options.powerAttack){
+     roll = new CONFIG.Dice.DamageRoll(roll.formula + `+ ${powerAttackFormula}`, roll.data, roll.options);
+  }
   // Evaluate the configured roll
   await roll.evaluate({async: true, maximize: roll.options.maximized});
 
