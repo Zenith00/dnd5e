@@ -37,6 +37,9 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
       const res = sheetData.data.resources[r] || {};
       res.name = r;
       res.placeholder = game.i18n.localize(`DND5E.Resource${r.titleCase()}`);
+      if (["primary","secondary","tertiary"].includes(r)){
+        res.value = res.placeholder;
+      }
       if (res && res.value === 0) delete res.value;
       if (res && res.max === 0) delete res.max;
       return arr.concat([res]);
