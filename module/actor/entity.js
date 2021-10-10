@@ -1336,6 +1336,11 @@ export default class Actor5e extends Actor {
    * @returns {Promise<RestResult>}          A Promise which resolves once the long rest workflow has completed.
    */
   async longRest({dialog=true, chat=true, newDay=true}={}) {
+    if (this.hasPlayerOwner && this.type === "character") {
+      if (this.data.data.resources["tertiary"].value < this.data.data.resources["tertiary"].max ) {
+        return ui.notifications.error(`${this.name} doesn't have enough long rest chits!`);
+      }
+    }
     // Maybe present a confirmation dialog
     if ( dialog ) {
       try {

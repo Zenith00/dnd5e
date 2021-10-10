@@ -38,12 +38,18 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
       res.name = r;
       res.placeholder = game.i18n.localize(`DND5E.Resource${r.titleCase()}`);
       if (["primary","secondary","tertiary"].includes(r)){
-        res.value = res.placeholder;
+        res.name = res.placeholder;
       }
       if (res && res.value === 0) delete res.value;
       if (res && res.max === 0) delete res.max;
       return arr.concat([res]);
     }, []);
+
+    sheetData.data.resources["secondary"].value = this.actor.items.reduce((prev, current) => {
+      return prev + ((current.name.includes("[R]") || current.name.toLowerCase().includes("potion")) ? 1 : 0)
+    }, 0);
+
+    sheetData.data.resources["secondary"].max = this.actor.data.data.prof + 1;
 
     // Experience Tracking
     sheetData.disableExperience = game.settings.get("dnd5e", "disableExperienceTracking");
