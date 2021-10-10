@@ -1000,9 +1000,11 @@ export default class Actor5e extends Actor {
     // Add ability modifier
     parts.push("@mod");
     data.mod = abl.mod;
+
     data.defaultAbility = abl.mod;
     data.abilities = this.data.data.abilities;
-
+    console.log(abl);
+    console.log(data)
     // Include proficiency bonus
     if ( abl.checkProf.hasProficiency ) {
       parts.push("@prof");
