@@ -12,6 +12,10 @@
  */
 export default class DamageRoll extends Roll {
   constructor(formula, data, options) {
+    console.log("Initializing damageroll superclass with")
+    console.log(formula)
+    console.log(data)
+    console.log(options)
     super(formula, data, options);
     // For backwards compatibility, skip rolls which do not have the "critical" option defined
     if ( this.options.critical !== undefined ) this.configureDamage();
@@ -43,7 +47,11 @@ export default class DamageRoll extends Roll {
    */
   configureDamage() {
     let flatBonus = 0;
+    console.log("CONFIGURING DAMAGE!!")
+    console.log(this.terms)
     for ( let [i, term] of this.terms.entries() ) {
+      console.log(`Handling term ${i}:`);
+      console.log(term)
 
       // Multiply dice terms
       if ( term instanceof DiceTerm ) {
@@ -179,6 +187,8 @@ export default class DamageRoll extends Roll {
 
     // Append a situational bonus term
     if ( form.bonus.value ) {
+      console.log("HAS BONUS")
+      console.log(form.bonus.value)
       const bonus = new Roll(form.bonus.value, this.data);
       if ( !(bonus.terms[0] instanceof OperatorTerm) ) this.terms.push(new OperatorTerm({operator: "+"}));
       this.terms = this.terms.concat(bonus.terms);
@@ -192,6 +202,8 @@ export default class DamageRoll extends Roll {
     console.log(form.powerAttack);
     this.options.rollMode = form.rollMode.value;
     this.options.powerAttack = html[0].querySelector("#powerAttack").checked;
+    console.log("DIALOG SUBMITTED, CONFIGURING DAMAGE")
+    console.log(this.terms)
     this.configureDamage();
     return this;
   }

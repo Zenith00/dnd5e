@@ -212,9 +212,13 @@ function _separateAnnotatedTerms(terms) {
 export async function d20Roll({
   parts=[], data={}, // Roll creation
   advantage, disadvantage, fumble=1, critical=20, targetValue, elvenAccuracy, halflingLucky, reliableTalent, // Roll customization
-  chooseModifier=false, fastForward=false, event, template, title, dialogOptions, // Dialog configuration
+  chooseModifier=false, defaultAbility, fastForward=false, event, template, title, dialogOptions, // Dialog configuration
   chatMessage=true, messageData={}, rollMode, speaker, flavor // Chat Message customization
 }={}) {
+
+  console.log("d20roll def")
+  console.log(defaultAbility)
+  console.log(data);
 
   // Handle input arguments
   const formula = ["1d20"].concat(parts).join(" + ");
@@ -242,7 +246,7 @@ export async function d20Roll({
       chooseModifier,
       defaultRollMode: defaultRollMode,
       defaultAction: advantageMode,
-      defaultAbility: data.defaultAbility || data?.item?.ability,
+      defaultAbility: defaultAbility || data?.item?.ability,
       template
     }, dialogOptions);
     if ( configured === null ) return null;
@@ -325,13 +329,25 @@ export async function damageRoll({
   fastForward=false, event, allowCritical=true, template, title, dialogOptions, // Dialog configuration
   chatMessage=true, messageData={}, rollMode, speaker, flavor // Chat Message customization
 }={}) {
+  const allowPowerAttack = (data.item.weaponType === "martialM" || data.item.weaponType === "martialR") && actor.data.data.attributes.martialChar;
 
   // Handle input arguments
   const defaultRollMode = rollMode || game.settings.get("core", "rollMode");
+  let formula = parts.join(" + ");
+
+  console.log("DICE.JS DAMAGE ROLL ");
+  console.log(parts)
+
+
+    // if (!window.CombatReady?.EXPIRED) {
+    //   formula += `+ 1d5`
+    // }
+
 
   // Construct the DamageRoll instance
-  const formula = parts.join(" + ");
+
   const {isCritical, isFF} = _determineCriticalMode({critical, fastForward, event});
+  console.log(formula)
   let roll = new CONFIG.Dice.DamageRoll(formula, data, {
     flavor: flavor || title,
     critical: isCritical,
@@ -341,30 +357,10 @@ export async function damageRoll({
     multiplyNumeric: multiplyNumeric ?? game.settings.get("dnd5e", "criticalDamageModifiers"),
     powerfulCritical: powerfulCritical ?? game.settings.get("dnd5e", "criticalDamageMaxDice")
   });
-  console.log(data);
-  console.log(actor);
-  const allowPowerAttack = (data.item.weaponType === "martialM" || data.item.weaponType === "martialR") && actor.data.data.attributes.martialChar;
-  console.log(allowPowerAttack);
-  let powerAttackFormula = "";
-  if (allowPowerAttack){
-    if (data.item.weaponType === "martialM"){
-      if (data.item.properties.two && !data.item.properties.rch) {
-        powerAttackFormula = "1d8 + @attributes.martialProf";
-      } else if (data.item.properties.two && data.item.properties.rch){
-        powerAttackFormula = "1d6 + @attributes.martialProf";
-      } else if (!data.item.properties.lgt) {
-        powerAttackFormula = "1d4 + @attributes.martialProf";
-      }
-    } else {
-      if (data.item.properties.hvy && data.item.properties.lod) {
-        powerAttackFormula = "1d6 + @attributes.martialProf";
-      } else if (data.item.properties.hvy && !data.item.properties.lod) {
-        powerAttackFormula = "1d4 + @attributes.martialProf";
-      }
-    }
 
+  console.log("roll created!")
+  console.log(roll)
 
-  }
   // Prompt a Dialog to further configure the DamageRoll
   if ( !isFF ) {
     const configured = await roll.configureDialog({
@@ -374,16 +370,34 @@ export async function damageRoll({
       template,
       allowCritical,
       allowPowerAttack,
-      powerAttackFormula,
     }, dialogOptions);
     if ( configured === null ) return null;
   }
 
-  console.log("ROLL COFNIGURED");
-  console.log(roll);
-  if (roll.options.powerAttack){
-     roll = new CONFIG.Dice.DamageRoll(roll.formula + `+ ${powerAttackFormula}`, roll.data, roll.options);
-  }
+
+
+
+  console.log("power attack, CBR handled")
+  console.log(roll.formula)
+  // if (allowPowerAttack && roll.options.powerAttack) {
+  //   if (data.item.weaponType === "martialM") {
+  //     if (data.item.properties.two && !data.item.properties.rch) {
+  //       roll.terms += [,new OperatorTerm({ operator: "+"}), ] ["1d8 + @attributes.martialProf"];
+  //     } else if (data.item.properties.two && data.item.properties.rch) {
+  //       roll.terms += ["1d8 + @attributes.martialProf"];
+  //     } else if (!data.item.properties.lgt) {
+  //       roll.terms += ["1d8 + @attributes.martialProf"];
+  //     }
+  //   } else {
+  //     if (data.item.properties.hvy && data.item.properties.lod) {
+  //       roll.terms += ["1d8 + @attributes.martialProf"];
+  //     } else if (data.item.properties.hvy && !data.item.properties.lod) {
+  //       roll.terms += ["1d8 + @attributes.martialProf"];
+  //     }
+  //   }
+  //
+  //
+  // }
   // Evaluate the configured roll
   await roll.evaluate({async: true, maximize: roll.options.maximized});
 

@@ -737,7 +737,7 @@ DND5E.healingTypes = {
  * Denominations of hit dice which can apply to classes.
  * @type {string[]}
  */
-DND5E.hitDieTypes = ["d6", "d8", "d10", "d12"];
+DND5E.hitDieTypes = ["d6", "d8", "d10", "d12", "d14","d18"];
 
 /* -------------------------------------------- */
 
@@ -1275,13 +1275,13 @@ DND5E.computeMartialLevel = (classItem) => {
   // console.log("Computing martial level: ");
   // console.log(classItem);
   if (["Ranger","Paladin","Artificer"].includes(classItem.data.name)){
-    return Math.floor(classItem.data.levels / 2);
+    return Math.floor(classItem.data.data.levels / 2);
   } else if (["Barbarian", "Monk"].includes(classItem.data.name)){
     return classItem.data.data.levels;
   } else if (
       (classItem.data.name === "Fighter" && classItem.data.data.subclass === "Eldritch Knight")
       || (classItem.data.name === "Rogue" && classItem.data.data.subclass === "Arcane Trickster")) {
-    return Math.floor(classItem.data.levels * (2/3));
+    return Math.floor(classItem.data.data.levels * (2/3));
   } else if (["Fighter","Rogue"].includes(classItem.data.name)) {
     return classItem.data.data.levels;
   } else {

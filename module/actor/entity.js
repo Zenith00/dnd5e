@@ -332,9 +332,10 @@ export default class Actor5e extends Actor {
     data.attributes.prof = Math.floor((level + 7) / 4);
     data.attributes.martialLevel = Math.floor(
       [... Object.values(this.classes)].reduce((p, c) => p + DND5E.computeMartialLevel(c), 0)
-    )
-    data.attributes.martialChar = data.attributes.martialLevel >= Math.floor(((2/3)*data.details.level))
-    data.attributes.martialProf =Math.floor((data.attributes.martialLevel + 7) / 4);
+    );
+    data.attributes.martialChar = data.attributes.martialLevel >= Math.floor(((2/3)*data.details.level));
+    data.attributes.martialProf =Math.floor((data.attributes.martialLevel + 7) / 4) ?? 0;
+    data.attributes.martialArmor = data.attributes.martialProf - 1 ?? 0;
 
     // Experience required for next level
     const xp = data.details.xp;
@@ -692,7 +693,7 @@ export default class Actor5e extends Actor {
     }
 
     // Compute total AC and return
-    ac.value = ac.base + ac.shield + ac.bonus + ac.cover;
+    ac.value = ac.base + ac.shield + ac.bonus + ac.cover + (this.data.data.attributes.martialArmor ?? 0);
     return ac;
   }
 
@@ -945,7 +946,7 @@ export default class Actor5e extends Actor {
       title: game.i18n.format("DND5E.SkillPromptTitle", {skill: CONFIG.DND5E.skills[skillId]}),
       halflingLucky: this.getFlag("dnd5e", "halflingLucky"),
       chooseModifier: true,
-      defaultAbility: data.defaultAbility,
+      defaultAbility: skl.ability,
       reliableTalent: reliableTalent,
       messageData: {
         speaker: options.speaker || ChatMessage.getSpeaker({actor: this}),
@@ -1001,10 +1002,9 @@ export default class Actor5e extends Actor {
     parts.push("@mod");
     data.mod = abl.mod;
 
-    data.defaultAbility = abl.mod;
+    data.defaultAbility = abilityId;
     data.abilities = this.data.data.abilities;
-    console.log(abl);
-    console.log(data)
+
     // Include proficiency bonus
     if ( abl.checkProf.hasProficiency ) {
       parts.push("@prof");
@@ -1394,8 +1394,7 @@ export default class Actor5e extends Actor {
     let hitPointUpdates = {};
     let hitDiceRecovered = 0;
     let hitDiceUpdates = [];
-    console.log("Medium rest!")
-    console.log(mediumRest)
+
     // Recover hit points & hit dice on long rest
     if ( longRest ) {
       ({ updates: hitPointUpdates, hitPointsRecovered } = this._getRestHitPointRecovery());
@@ -1404,7 +1403,7 @@ export default class Actor5e extends Actor {
     let hdUpdates = {};
     if (mediumRest){
       ({updates: hitPointUpdates, hitPointsRecovered} = this._getRestHitPointRecovery({recoverTemp: true, recoverTempMax: true, healHalf:true}));
-      hdUpdates = ({"data.attributes.exhaustion": this.data.data.attributes.exhaustion-2});
+      hdUpdates = ({"data.attributes.exhaustion": Math.max(0,this.data.data.attributes.exhaustion-2)});
     }
 
     // Figure out the rest of the changes
@@ -1415,7 +1414,8 @@ export default class Actor5e extends Actor {
         ...hdUpdates,
         ...hitPointUpdates,
         ...this._getRestResourceRecovery({ recoverShortRestResources: !longRest, recoverLongRestResources: longRest }),
-        ...this._getRestSpellRecovery({ recoverSpells: longRest })
+        ...this._getRestSpellRecovery({ recoverSpells: longRest }),
+        "data.resources.tertiary.value": 0
       },
       updateItems: [
         ...hitDiceUpdates,

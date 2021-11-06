@@ -122,7 +122,7 @@ export default class AbilityUseDialog extends Dialog {
 
     if (usesSpellPoints) {
       for(let i=1; i <= 9; i++){
-        if (((actorData.classes["sorcerer"].levels +1 )/ 2) >= i){
+        if (((actorData.classes["sorcerer"].levels +1 )/ 2) >= i && i >= lvl){
             spellLevels.push({
               level: i,
               label: `${CONFIG.DND5E.spellPointCosts[i]} (${CONFIG.DND5E.spellLevels[i]})`,

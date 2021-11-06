@@ -28,7 +28,8 @@ export const _getInitiativeFormula = function() {
     (init.prof.term !== "0") ? init.prof.term : null,
     (init.bonus !== 0) ? init.bonus : null
   ];
-
+  console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+  console.log(parts);
   // Ability Check Bonuses
   const dexCheckBonus = actorData.abilities.dex.bonuses?.check;
   const globalCheckBonus = actorData.bonuses?.abilities?.check;

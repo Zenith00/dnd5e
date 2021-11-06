@@ -294,6 +294,14 @@ export default class ActorSheet5e extends ActorSheet {
             value: ac.dex
           });
         }
+        // if(this.actor.data.data.attributes.martialChar && this.actor.data.data.attributes.martialProf   ) {
+        //   attribution.push({
+        //     label: "Martial Enhancement",
+        //     mode: CONST.ACTIVE_EFFECT_MODES.ADD,
+        //     value: this.actor.data.data.attributes.martialProf - 1
+        //   });
+        // }
+
         break;
 
       // Other AC formula

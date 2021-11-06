@@ -1072,9 +1072,10 @@ export default class Item5e extends Item {
     const itemData = this.data.data;
     const actorData = this.actor.data.data;
     const messageData = {"flags.dnd5e.roll": {type: "damage", itemId: this.id}};
-
+    console.log("ROLLING DAMAGE ON ENTITY")
     // Get roll data
     const parts = itemData.damage.parts.map(d => d[0]);
+    console.log(parts)
     const rollData = this.getRollData();
     if (spellLevel) rollData.item.level = spellLevel;
 
@@ -1126,6 +1127,9 @@ export default class Item5e extends Item {
       parts.push(actorBonus.damage);
     }
 
+    console.log("Actor bonus damage added...")
+    console.log(parts)
+
     // Handle ammunition damage
     const ammoData = this._ammo?.data;
 
@@ -1142,11 +1146,13 @@ export default class Item5e extends Item {
       rollConfig.criticalBonusDice = this.actor.getFlag("dnd5e", "meleeCriticalDamageDice") ?? 0;
     }
 
+
+
     // Factor in extra weapon-specific critical damage
     if ( itemData.critical?.damage ) {
       rollConfig.criticalBonusDamage = itemData.critical.damage;
     }
-
+  console.log("Finishe ditem entity setup, calling damageRoll")
     // Call the roll helper utility
     return damageRoll(mergeObject(rollConfig, options));
   }
