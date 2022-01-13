@@ -1,6 +1,6 @@
 {
   "_id": "rQ6sO7HDWzqMhSI3",
-  "name": "Spell Scroll Cantrip Level",
+  "name": "Spell Scroll Cantrip",
   "type": "consumable",
   "img": "icons/sundries/scrolls/scroll-bound-orange-tan.webp",
   "data": {
@@ -53,7 +53,10 @@
     "actionType": "msak",
     "attackBonus": 5,
     "chatFlavor": "",
-    "critical": null,
+    "critical": {
+      "threshold": null,
+      "damage": ""
+    },
     "damage": {
       "parts": [],
       "versatile": ""

@@ -352,7 +352,7 @@ export async function damageRoll({
   console.log(formula)
   let roll = new CONFIG.Dice.DamageRoll(formula, data, {
     flavor: flavor || title,
-    critical: isCritical,
+    critical: isFF ? isCritical : false,
     criticalBonusDice,
     criticalMultiplier,
     criticalBonusDamage,

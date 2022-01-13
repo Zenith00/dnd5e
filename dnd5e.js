@@ -78,11 +78,12 @@ Hooks.once("init", function() {
     },
     macros: macros,
     migrations: migrations,
-    rollItemMacro: macros.rollItemMacro
+    rollItemMacro: macros.rollItemMacro,
+    isV9: !foundry.utils.isNewerVersion("9.224", game.version ?? game.data.version)
   };
 
   // This will be removed when dnd5e minimum core version is updated to v9.
-  if ( foundry.utils.isNewerVersion("9.224", game.data.version) ) dice.shimIsDeterministic();
+  if ( !game.dnd5e.isV9 ) dice.shimIsDeterministic();
 
   // Record Configuration Values
   CONFIG.DND5E = DND5E;
@@ -103,7 +104,7 @@ Hooks.once("init", function() {
   registerSystemSettings();
 
   // Patch Core Functions
-  CONFIG.Combat.initiative.formula = "1d12 + @attributes.init.mod + @attributes.init.prof + @attributes.init.bonus + @abilities.dex.bonuses.check + @bonuses.abilities.check";
+  CONFIG.Combat.initiative.formula = "1d20 + @attributes.init.mod + @attributes.init.prof + @attributes.init.bonus + @abilities.dex.bonuses.check + @bonuses.abilities.check";
   Combatant.prototype._getInitiativeFormula = _getInitiativeFormula;
 
   // Register Roll Extensions
@@ -259,14 +260,13 @@ function expandAttributeList(attributes) {
  * Once the entire VTT framework is initialized, check to see if we should perform a data migration
  */
 Hooks.once("ready", function() {
-  game.system.data.verison = "1.4.2";
   // Wait to register hotbar drop hook on ready so that modules could register earlier if they want to
   Hooks.on("hotbarDrop", (bar, data, slot) => macros.create5eMacro(data, slot));
 
   // Determine whether a system migration is required and feasible
   if ( !game.user.isGM ) return;
   const currentVersion = "1.5.2";// game.settings.get("dnd5e", "systemMigrationVersion");
-  const NEEDS_MIGRATION_VERSION = "1.5.2";
+  const NEEDS_MIGRATION_VERSION = "1.5.6";
   const COMPATIBLE_MIGRATION_VERSION = 0.80;
   const totalDocuments = game.actors.size + game.scenes.size + game.items.size;
   if ( !currentVersion && totalDocuments === 0 ) return game.settings.set("dnd5e", "systemMigrationVersion", game.system.data.version);
@@ -316,4 +316,3 @@ Hooks.on("getActorDirectoryEntryContext", Actor5e.addDirectoryContextOptions);
 Handlebars.registerHelper("getProperty", function(data, property) {
   return getProperty(data, property);
 });
-

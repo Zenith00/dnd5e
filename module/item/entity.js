@@ -1,5 +1,5 @@
 import {simplifyRollFormula, d20Roll, damageRoll} from "../dice.js";
-import AbilityUseDialog                           from "../apps/ability-use-dialog.js";
+import AbilityUseDialog from "../apps/ability-use-dialog.js";
 import Proficiency from "../actor/proficiency.js";
 
 /**
@@ -10,7 +10,6 @@ export default class Item5e extends Item {
 
   /* -------------------------------------------- */
   /*  Item Properties                             */
-
   /* -------------------------------------------- */
 
   /**
@@ -49,7 +48,7 @@ export default class Item5e extends Item {
         }
 
         // Ranged weapons - Dex (PH p.194)
-        else if (["simpleR", "martialR"].includes(wt)) return "dex";
+        else if ( ["simpleR", "martialR"].includes(wt) ) return "dex";
       }
       return "str";
     }
@@ -164,6 +163,20 @@ export default class Item5e extends Item {
   }
 
   /* -------------------------------------------- */
+
+  /**
+   * Should this item's active effects be suppressed.
+   * @type {boolean}
+   */
+  get areEffectsSuppressed() {
+    const requireEquipped = (this.data.type !== "consumable") || ["rod", "trinket", "wand"].includes(
+      this.data.data.consumableType);
+    if ( requireEquipped && (this.data.data.equipped === false) ) return true;
+
+    return this.data.data.attunement === CONFIG.DND5E.attunementTypes.REQUIRED;
+  }
+
+  /* -------------------------------------------- */
   /*  Data Preparation                            */
   /* -------------------------------------------- */
 
@@ -180,17 +193,17 @@ export default class Item5e extends Item {
     const labels = this.labels = {};
 
     // Classes
-    if (itemData.type === "class") {
+    if ( itemData.type === "class" ) {
       data.levels = Math.clamped(data.levels, 1, 20);
     }
 
     // Spell Level,  School, and Components
-    if (itemData.type === "spell") {
+    if ( itemData.type === "spell" ) {
       data.preparation.mode = data.preparation.mode || "prepared";
       labels.level = C.spellLevels[data.level];
       labels.school = C.spellSchools[data.school];
       labels.components = Object.entries(data.components).reduce((arr, c) => {
-        if (c[1] !== true) return arr;
+        if ( c[1] !== true ) return arr;
         arr.push(c[0].titleCase().slice(0, 1));
         return arr;
       }, []);
@@ -198,25 +211,25 @@ export default class Item5e extends Item {
     }
 
     // Feat Items
-    else if (itemData.type === "feat") {
+    else if ( itemData.type === "feat" ) {
       const act = data.activation;
-      if (act && (act.type === C.abilityActivationTypes.legendary)) labels.featType = game.i18n.localize("DND5E.LegendaryActionLabel");
-      else if (act && (act.type === C.abilityActivationTypes.lair)) labels.featType = game.i18n.localize("DND5E.LairActionLabel");
-      else if (act && act.type) labels.featType = game.i18n.localize(data.damage.length ? "DND5E.Attack" : "DND5E.Action");
+      if ( act && (act.type === C.abilityActivationTypes.legendary) ) labels.featType = game.i18n.localize("DND5E.LegendaryActionLabel");
+      else if ( act && (act.type === C.abilityActivationTypes.lair) ) labels.featType = game.i18n.localize("DND5E.LairActionLabel");
+      else if ( act && act.type ) labels.featType = game.i18n.localize(data.damage.length ? "DND5E.Attack" : "DND5E.Action");
       else labels.featType = game.i18n.localize("DND5E.Passive");
     }
 
     // Equipment Items
-    else if (itemData.type === "equipment") {
+    else if ( itemData.type === "equipment" ) {
       labels.armor = data.armor.value ? `${data.armor.value} ${game.i18n.localize("DND5E.AC")}` : "";
     }
 
     // Activated Items
-    if (data.hasOwnProperty("activation")) {
+    if ( data.hasOwnProperty("activation") ) {
 
       // Ability Activation Label
       let act = data.activation || {};
-      if (act) labels.activation = [act.cost, C.abilityActivationTypes[act.type]].filterJoin(" ");
+      if ( act ) labels.activation = [act.cost, C.abilityActivationTypes[act.type]].filterJoin(" ");
 
       // Target Label
       let tgt = data.target || {};
@@ -249,7 +262,7 @@ export default class Item5e extends Item {
     if ( data.hasOwnProperty("actionType") ) {
       // Damage
       let dam = data.damage || {};
-      if (dam.parts) {
+      if ( dam.parts ) {
         labels.damage = dam.parts.map(d => d[0]).join(" + ").replace(/\+ -/g, "- ");
         labels.damageTypes = dam.parts.map(d => C.damageTypes[d[1]]).join(", ");
       }
@@ -268,7 +281,7 @@ export default class Item5e extends Item {
    */
   prepareFinalAttributes() {
     // Proficiency
-    this.data.data.prof = new Proficiency(this.actor?.data.data.prof, this.data.data.proficient);
+    this.data.data.prof = new Proficiency(this.actor?.data.data.attributes.prof, this.data.data.proficient);
 
     if ( this.data.data.hasOwnProperty("actionType") ) {
       // Ability checks
@@ -321,16 +334,16 @@ export default class Item5e extends Item {
    * @returns {number|null}
    */
   getSaveDC() {
-    if (!this.hasSave) return;
+    if ( !this.hasSave ) return;
     const save = this.data.data?.save;
 
     // Actor spell-DC based scaling
-    if (save.scaling === "spell") {
+    if ( save.scaling === "spell" ) {
       save.dc = this.isOwned ? getProperty(this.actor.data, "data.attributes.spelldc") : null;
     }
 
     // Ability-score based scaling
-    else if (save.scaling !== "flat") {
+    else if ( save.scaling !== "flat" ) {
       save.dc = this.isOwned ? getProperty(this.actor.data, `data.abilities.${save.scaling}.dc`) : null;
     }
 
@@ -345,7 +358,7 @@ export default class Item5e extends Item {
   /**
    * Update a label to the Item detailing its total to hit bonus.
    * Sources:
-   * - item entity's innate attack bonus
+   * - item document's innate attack bonus
    * - item's actor's proficiency bonus if applicable
    * - item's actor's global bonuses to the given item type
    * - item's ammunition if applicable
@@ -354,26 +367,26 @@ export default class Item5e extends Item {
    */
   getAttackToHit() {
     const itemData = this.data.data;
-    if (!this.hasAttack || !itemData) return;
+    if ( !this.hasAttack || !itemData ) return;
     const rollData = this.getRollData();
 
     // Define Roll bonuses
     const parts = [];
 
     // Include the item's innate attack bonus as the initial value and label
-    if (itemData.attackBonus) {
+    if ( itemData.attackBonus ) {
       parts.push(itemData.attackBonus);
       this.labels.toHit = itemData.attackBonus;
     }
 
     // Take no further action for un-owned items
-    if (!this.isOwned) return {rollData, parts};
+    if ( !this.isOwned ) return {rollData, parts};
 
     // Ability score modifier
     parts.push("@mod");
 
     // Add proficiency bonus if an explicit proficiency flag is present or for non-item features
-    if (!["weapon", "consumable"].includes(this.data.type) || itemData.proficient) {
+    if ( !["weapon", "consumable"].includes(this.data.type) || itemData.proficient ) {
       parts.push("@prof");
       if ( this.data.data.prof?.hasProficiency ) {
         rollData.prof = this.data.data.prof.term;
@@ -382,10 +395,10 @@ export default class Item5e extends Item {
 
     // Actor-level global bonus to attack rolls
     const actorBonus = this.actor.data.data.bonuses?.[itemData.actionType] || {};
-    if (actorBonus.attack) parts.push(actorBonus.attack);
+    if ( actorBonus.attack ) parts.push(actorBonus.attack);
 
     // One-time bonus provided by consumed ammunition
-    if ((itemData.consume?.type === "ammo") && this.actor.items) {
+    if ( (itemData.consume?.type === "ammo") && this.actor.items ) {
       const ammoItemData = this.actor.items.get(itemData.consume.target)?.data;
 
       if (ammoItemData) {
@@ -393,7 +406,7 @@ export default class Item5e extends Item {
         const ammoCanBeConsumed = ammoItemQuantity && (ammoItemQuantity - (itemData.consume.amount ?? 0) >= 0);
         const ammoItemAttackBonus = ammoItemData.data.attackBonus;
         const ammoIsTypeConsumable = (ammoItemData.type === "consumable") && (ammoItemData.data.consumableType === "ammo");
-        if (ammoCanBeConsumed && ammoItemAttackBonus && ammoIsTypeConsumable) {
+        if ( ammoCanBeConsumed && ammoItemAttackBonus && ammoIsTypeConsumable ) {
           parts.push("@ammo");
           rollData.ammo = ammoItemAttackBonus;
         }
@@ -414,8 +427,8 @@ export default class Item5e extends Item {
   /**
    * Retrieve an item's critical hit threshold. Uses the smallest value from among the
    * following sources:
-   * - item entity
-   * - item entity's actor (if it has one)
+   * - item document
+   * - item document's actor (if it has one)
    * - the constant '20'
    *
    * @returns {number|null}  The minimum value that must be rolled to be considered a critical hit.
@@ -475,7 +488,7 @@ export default class Item5e extends Item {
    *                                                the prepared chat message data (if false).
    * @returns {Promise<ChatMessage|object|void>}
    */
-  async roll({configureDialog = true, rollMode, createMessage = true} = {}) {
+  async roll({configureDialog=true, rollMode, createMessage=true}={}) {
     let item = this;
     const id = this.data.data;                // Item system data
     const actor = this.actor;
@@ -500,18 +513,21 @@ export default class Item5e extends Item {
     let consumeSpellPoints = false;
 
     if ( requireSpellSlot ) consumeSpellLevel = id.preparation.mode === "pact" ? "pact" : `spell${id.level}`;
+
     // Display a configuration dialog to customize the usage
     const needsConfiguration =
       createMeasuredTemplate || consumeRecharge || consumeResource || consumeSpellSlot || consumeUsage;
     if (configureDialog && needsConfiguration) {
       const configuration = await AbilityUseDialog.create(this);
       if (!configuration) return;
+
       // Determine consumption preferences
       createMeasuredTemplate = Boolean(configuration.placeTemplate);
       consumeUsage = Boolean(configuration.consumeUse);
       consumeRecharge = Boolean(configuration.consumeRecharge);
       consumeResource = Boolean(configuration.consumeResource);
       consumeSpellSlot = Boolean(configuration.consumeSlot);
+
       // Handle spell upcasting
       if ( requireSpellSlot ) {
         let spellCost = configuration.level.split(";");
@@ -545,13 +561,13 @@ export default class Item5e extends Item {
     if ( !foundry.utils.isObjectEmpty(actorUpdates) ) await actor.update(actorUpdates);
     if ( !foundry.utils.isObjectEmpty(resourceUpdates) ) {
       const resource = actor.items.get(id.consume?.target);
-      if (resource) await resource.update(resourceUpdates);
+      if ( resource ) await resource.update(resourceUpdates);
     }
 
     // Initiate measured template creation
-    if (createMeasuredTemplate) {
+    if ( createMeasuredTemplate ) {
       const template = game.dnd5e.canvas.AbilityTemplate.fromItem(item);
-      if (template) template.drawPreview();
+      if ( template ) template.drawPreview();
     }
 
     // Create or return the Chat Message data
@@ -582,9 +598,9 @@ export default class Item5e extends Item {
     const resourceUpdates = {};
 
     // Consume Recharge
-    if (consumeRecharge) {
+    if ( consumeRecharge ) {
       const recharge = id.recharge || {};
-      if (recharge.charged === false) {
+      if ( recharge.charged === false ) {
         ui.notifications.warn(game.i18n.format("DND5E.ItemNoUses", {name: this.name}));
         return false;
       }
@@ -592,9 +608,9 @@ export default class Item5e extends Item {
     }
 
     // Consume Limited Resource
-    if (consumeResource) {
+    if ( consumeResource ) {
       const canConsume = this._handleConsumeResource(itemUpdates, actorUpdates, resourceUpdates);
-      if (canConsume === false) return false;
+      if ( canConsume === false ) return false;
     }
 
     // Consume Spell Slots
@@ -621,22 +637,22 @@ export default class Item5e extends Item {
     }
 
     // Consume Limited Usage
-    if (consumeUsage) {
+    if ( consumeUsage ) {
       const uses = id.uses || {};
       const available = Number(uses.value ?? 0);
       let used = false;
 
       // Reduce usages
       const remaining = Math.max(available - 1, 0);
-      if (available >= 1) {
+      if ( available >= 1 ) {
         used = true;
         itemUpdates["data.uses.value"] = remaining;
       }
 
       // Reduce quantity if not reducing usages or if usages hit 0 and we are set to consumeQuantity
-      if (consumeQuantity && (!used || (remaining === 0))) {
+      if ( consumeQuantity && (!used || (remaining === 0)) ) {
         const q = Number(id.quantity ?? 1);
-        if (q >= 1) {
+        if ( q >= 1 ) {
           used = true;
           itemUpdates["data.quantity"] = Math.max(q - 1, 0);
           itemUpdates["data.uses.value"] = uses.max ?? 1;
@@ -644,7 +660,7 @@ export default class Item5e extends Item {
       }
 
       // If the item was not used, return a warning
-      if (!used) {
+      if ( !used ) {
         ui.notifications.warn(game.i18n.format("DND5E.ItemNoUses", {name: this.name}));
         return false;
       }
@@ -668,11 +684,11 @@ export default class Item5e extends Item {
     const actor = this.actor;
     const itemData = this.data.data;
     const consume = itemData.consume || {};
-    if (!consume.type) return;
+    if ( !consume.type ) return;
 
     // No consumed target
     const typeLabel = CONFIG.DND5E.abilityConsumptionTypes[consume.type];
-    if (!consume.target) {
+    if ( !consume.target ) {
       ui.notifications.warn(game.i18n.format("DND5E.ConsumeWarningNoResource", {name: this.name, type: typeLabel}));
       return false;
     }
@@ -681,7 +697,7 @@ export default class Item5e extends Item {
     let resource = null;
     let amount = Number(consume.amount ?? 1);
     let quantity = 0;
-    switch (consume.type) {
+    switch ( consume.type ) {
       case "attribute":
         resource = getProperty(actor.data.data, consume.target);
         quantity = resource || 0;
@@ -693,10 +709,10 @@ export default class Item5e extends Item {
         break;
       case "charges":
         resource = actor.items.get(consume.target);
-        if (!resource) break;
+        if ( !resource ) break;
         const uses = resource.data.data.uses;
-        if (uses.per && uses.max) quantity = uses.value;
-        else if (resource.data.data.recharge?.value) {
+        if ( uses.per && uses.max ) quantity = uses.value;
+        else if ( resource.data.data.recharge?.value ) {
           quantity = resource.data.data.recharge.charged ? 1 : 0;
           amount = 1;
         }
@@ -711,13 +727,13 @@ export default class Item5e extends Item {
 
     // Verify that the required quantity is available
     let remaining = quantity - amount;
-    if (remaining < 0) {
+    if ( remaining < 0 ) {
       ui.notifications.warn(game.i18n.format("DND5E.ConsumeWarningNoQuantity", {name: this.name, type: typeLabel}));
       return false;
     }
 
     // Define updates to provided data objects
-    switch (consume.type) {
+    switch ( consume.type ) {
       case "attribute":
         actorUpdates[`data.${consume.target}`] = remaining;
         break;
@@ -728,8 +744,8 @@ export default class Item5e extends Item {
       case "charges":
         const uses = resource.data.data.uses || {};
         const recharge = resource.data.data.recharge || {};
-        if (uses.per && uses.max) resourceUpdates["data.uses.value"] = remaining;
-        else if (recharge.value) resourceUpdates["data.recharge.charged"] = false;
+        if ( uses.per && uses.max ) resourceUpdates["data.uses.value"] = remaining;
+        else if ( recharge.value ) resourceUpdates["data.recharge.charged"] = false;
         break;
     }
   }
@@ -740,11 +756,11 @@ export default class Item5e extends Item {
    * Display the chat card for an Item as a Chat Message
    * @param {object} [options]                Options which configure the display of the item chat card
    * @param {string} [options.rollMode]       The message visibility mode to apply to the created card
-   * @param {boolean} [options.createMessage] Whether to automatically create a ChatMessage entity (if true), or only
+   * @param {boolean} [options.createMessage] Whether to automatically create a ChatMessage document (if true), or only
    *                                          return the prepared message data (if false)
    * @returns {ChatMessage|object} Chat message if `createMessage` is true, otherwise an object containing message data.
    */
-  async displayCard({rollMode, createMessage = true} = {}) {
+  async displayCard({rollMode, createMessage=true}={}) {
 
     // Render the chat card template
     const token = this.actor.token;
@@ -771,13 +787,13 @@ export default class Item5e extends Item {
       user: game.user.data._id,
       type: CONST.CHAT_MESSAGE_TYPES.OTHER,
       content: html,
-      flavor : this.data.data.chatFlavor || this.name,
+      flavor: this.data.data.chatFlavor || this.name,
       speaker: ChatMessage.getSpeaker({actor: this.actor, token}),
-      flags  : {"core.canPopout": true}
+      flags: {"core.canPopout": true}
     };
 
     // If the Item was destroyed in the process of displaying its card - embed the item data in the chat message
-    if ((this.data.type === "consumable") && !this.actor.items.has(this.id)) {
+    if ( (this.data.type === "consumable") && !this.actor.items.has(this.id) ) {
       chatData.flags["dnd5e.itemData"] = this.data;
     }
 
@@ -807,11 +823,11 @@ export default class Item5e extends Item {
     // Item type specific properties
     const props = [];
     const fn = this[`_${this.data.type}ChatData`];
-    if (fn) fn.bind(this)(data, labels, props);
+    if ( fn ) fn.bind(this)(data, labels, props);
 
     // Equipment properties
-    if (data.hasOwnProperty("equipped") && !["loot", "tool"].includes(this.data.type)) {
-      if (data.attunement === CONFIG.DND5E.attunementTypes.REQUIRED) {
+    if ( data.hasOwnProperty("equipped") && !["loot", "tool"].includes(this.data.type) ) {
+      if ( data.attunement === CONFIG.DND5E.attunementTypes.REQUIRED ) {
         props.push(game.i18n.localize(CONFIG.DND5E.attunements[CONFIG.DND5E.attunementTypes.REQUIRED]));
       }
       props.push(
@@ -821,7 +837,7 @@ export default class Item5e extends Item {
     }
 
     // Ability activation properties
-    if (data.hasOwnProperty("activation")) {
+    if ( data.hasOwnProperty("activation") ) {
       props.push(
         labels.activation + (data.activation?.condition ? ` (${data.activation.condition})` : ""),
         labels.target,
@@ -947,7 +963,6 @@ export default class Item5e extends Item {
 
   /* -------------------------------------------- */
   /*  Item Rolls - Attack, Damage, Saves, Checks  */
-
   /* -------------------------------------------- */
 
   /**
@@ -957,10 +972,10 @@ export default class Item5e extends Item {
    * @param {object} options        Roll options which are configured and provided to the d20Roll function
    * @returns {Promise<Roll|null>}   A Promise which resolves to the created Roll instance
    */
-  async rollAttack(options = {}) {
+  async rollAttack(options={}) {
     const itemData = this.data.data;
     const flags = this.actor.data.flags.dnd5e || {};
-    if (!this.hasAttack) {
+    if ( !this.hasAttack ) {
       throw new Error("You may not place an Attack Roll with this Item.");
     }
     let title = `${this.name} - ${game.i18n.localize("DND5E.AttackRoll")}`;
@@ -973,12 +988,12 @@ export default class Item5e extends Item {
     let ammo = null;
     let ammoUpdate = null;
     const consume = itemData.consume;
-    if (consume?.type === "ammo") {
+    if ( consume?.type === "ammo" ) {
       ammo = this.actor.items.get(consume.target);
       if (ammo?.data) {
         const q = ammo.data.data.quantity;
         const consumeAmount = consume.amount ?? 0;
-        if (q && (q - consumeAmount >= 0)) {
+        if ( q && (q - consumeAmount >= 0) ) {
           this._ammo = ammo;
           title += ` [${ammo.name}]`;
         }
@@ -986,7 +1001,7 @@ export default class Item5e extends Item {
 
       // Get pending ammunition update
       const usage = this._getUsageUpdates({consumeResource: true});
-      if (usage === false) return null;
+      if ( usage === false ) return null;
       ammoUpdate = usage.resourceUpdates || {};
     }
 
@@ -1040,17 +1055,17 @@ export default class Item5e extends Item {
     }
 
     // Apply Halfling Lucky
-    if (flags.halflingLucky) rollConfig.halflingLucky = true;
+    if ( flags.halflingLucky ) rollConfig.halflingLucky = true;
 
     // Compose calculated roll options with passed-in roll options
     rollConfig = mergeObject(rollConfig, options);
 
     // Invoke the d20 roll helper
     const roll = await d20Roll(rollConfig);
-    if (roll === false) return null;
+    if ( roll === false ) return null;
 
     // Commit ammunition consumption on attack rolls resource consumption if the attack roll was made
-    if (ammo && !isObjectEmpty(ammoUpdate)) await ammo.update(ammoUpdate);
+    if ( ammo && !isObjectEmpty(ammoUpdate) ) await ammo.update(ammoUpdate);
     return roll;
   }
 
@@ -1072,36 +1087,34 @@ export default class Item5e extends Item {
     const itemData = this.data.data;
     const actorData = this.actor.data.data;
     const messageData = {"flags.dnd5e.roll": {type: "damage", itemId: this.id}};
-    console.log("ROLLING DAMAGE ON ENTITY")
     // Get roll data
     const parts = itemData.damage.parts.map(d => d[0]);
-    console.log(parts)
     const rollData = this.getRollData();
-    if (spellLevel) rollData.item.level = spellLevel;
+    if ( spellLevel ) rollData.item.level = spellLevel;
 
     // Configure the damage roll
     const actionFlavor = game.i18n.localize(itemData.actionType === "heal" ? "DND5E.Healing" : "DND5E.DamageRoll");
     const title = `${this.name} - ${actionFlavor}`;
     const rollConfig = {
-      actor        : this.actor,
-      critical     : critical ?? event?.altKey ?? false,
-      data         : rollData,
-      event        : event,
-      fastForward  : event ? event.shiftKey || event.altKey || event.ctrlKey || event.metaKey : false,
-      parts        : parts,
-      title        : title,
-      flavor       : this.labels.damageTypes.length ? `${title} (${this.labels.damageTypes})` : title,
-      speaker      : ChatMessage.getSpeaker({actor: this.actor}),
+      actor: this.actor,
+      critical: critical ?? event?.altKey ?? false,
+      data: rollData,
+      event: event,
+      fastForward: event ? event.shiftKey || event.altKey || event.ctrlKey || event.metaKey : false,
+      parts: parts,
+      title: title,
+      flavor: this.labels.damageTypes.length ? `${title} (${this.labels.damageTypes})` : title,
       dialogOptions: {
         width: 400,
-        top  : event ? event.clientY - 80 : null,
-        left : window.innerWidth - 710
+        top: event ? event.clientY - 80 : null,
+        left: window.innerWidth - 710,
+        speaker: ChatMessage.getSpeaker({actor: this.actor})
       },
-      messageData  : messageData
+      messageData: messageData
     };
 
     // Adjust damage from versatile usage
-    if (versatile && itemData.damage.versatile) {
+    if ( versatile && itemData.damage.versatile ) {
       parts[0] = itemData.damage.versatile;
       messageData["flags.dnd5e.roll"].versatile = true;
     }
@@ -1115,7 +1128,7 @@ export default class Item5e extends Item {
         else level = actorData.details.spellLevel;
         this._scaleCantripDamage(parts, itemData.scaling.formula, level, rollData);
       }
-      else if (spellLevel && (itemData.scaling.mode === "level") && itemData.scaling.formula) {
+      else if ( spellLevel && (itemData.scaling.mode === "level") && itemData.scaling.formula ) {
         const scaling = itemData.scaling.formula;
         this._scaleSpellDamage(parts, itemData.level, spellLevel, scaling, rollData);
       }
@@ -1123,18 +1136,15 @@ export default class Item5e extends Item {
 
     // Add damage bonus formula
     const actorBonus = getProperty(actorData, `bonuses.${itemData.actionType}`) || {};
-    if (actorBonus.damage && (parseInt(actorBonus.damage) !== 0)) {
+    if ( actorBonus.damage && (parseInt(actorBonus.damage) !== 0) ) {
       parts.push(actorBonus.damage);
     }
-
-    console.log("Actor bonus damage added...")
-    console.log(parts)
 
     // Handle ammunition damage
     const ammoData = this._ammo?.data;
 
     // Only add the ammunition damage if the ammution is a consumable with type 'ammo'
-    if (this._ammo && (ammoData.type === "consumable") && (ammoData.data.consumableType === "ammo")) {
+    if ( this._ammo && (ammoData.type === "consumable") && (ammoData.data.consumableType === "ammo") ) {
       parts.push("@ammo");
       rollData.ammo = ammoData.data.damage.parts.map(p => p[0]).join("+");
       rollConfig.flavor += ` [${this._ammo.name}]`;
@@ -1142,17 +1152,15 @@ export default class Item5e extends Item {
     }
 
     // Factor in extra critical damage dice from the Barbarian's "Brutal Critical"
-    if (itemData.actionType === "mwak") {
+    if ( itemData.actionType === "mwak" ) {
       rollConfig.criticalBonusDice = this.actor.getFlag("dnd5e", "meleeCriticalDamageDice") ?? 0;
     }
-
-
 
     // Factor in extra weapon-specific critical damage
     if ( itemData.critical?.damage ) {
       rollConfig.criticalBonusDamage = itemData.critical.damage;
     }
-  console.log("Finishe ditem entity setup, calling damageRoll")
+
     // Call the roll helper utility
     return damageRoll(mergeObject(rollConfig, options));
   }
@@ -1170,7 +1178,7 @@ export default class Item5e extends Item {
    */
   _scaleCantripDamage(parts, scale, level, rollData) {
     const add = Math.floor((level + 1) / 6);
-    if (add === 0) return;
+    if ( add === 0 ) return;
     return this._scaleDamage(parts, scale || parts.join(" + "), add, rollData);
   }
 
@@ -1188,7 +1196,7 @@ export default class Item5e extends Item {
    */
   _scaleSpellDamage(parts, baseLevel, spellLevel, formula, rollData) {
     const upcastLevels = Math.max(spellLevel - baseLevel, 0);
-    if (upcastLevels === 0) return parts;
+    if ( upcastLevels === 0 ) return parts;
     return this._scaleDamage(parts, formula, upcastLevels, rollData);
   }
 
@@ -1204,16 +1212,16 @@ export default class Item5e extends Item {
    * @private
    */
   _scaleDamage(parts, scaling, times, rollData) {
-    if (times <= 0) return parts;
+    if ( times <= 0 ) return parts;
     const p0 = new Roll(parts[0], rollData);
     const s = new Roll(scaling, rollData).alter(times);
 
     // Attempt to simplify by combining like dice terms
     let simplified = false;
-    if ((s.terms[0] instanceof Die) && (s.terms.length === 1)) {
+    if ( (s.terms[0] instanceof Die) && (s.terms.length === 1) ) {
       const d0 = p0.terms[0];
       const s0 = s.terms[0];
-      if ((d0 instanceof Die) && (d0.faces === s0.faces) && d0.modifiers.equals(s0.modifiers)) {
+      if ( (d0 instanceof Die) && (d0.faces === s0.faces) && d0.modifiers.equals(s0.modifiers) ) {
         d0.number += s0.number;
         parts[0] = p0.formula;
         simplified = true;
@@ -1221,7 +1229,7 @@ export default class Item5e extends Item {
     }
 
     // Otherwise add to the first part
-    if (!simplified) {
+    if ( !simplified ) {
       parts[0] = `${parts[0]} + ${s.formula}`;
     }
     return parts;
@@ -1236,23 +1244,23 @@ export default class Item5e extends Item {
    * @param {boolean} [options.spellLevel]  Level at which a spell is cast.
    * @returns {Promise<Roll>}   A Promise which resolves to the created Roll instance.
    */
-  async rollFormula({spellLevel} = {}) {
-    if (!this.data.data.formula) {
+  async rollFormula({spellLevel}={}) {
+    if ( !this.data.data.formula ) {
       throw new Error("This Item does not have a formula to roll!");
     }
 
     // Define Roll Data
     const rollData = this.getRollData();
-    if (spellLevel) rollData.item.level = spellLevel;
+    if ( spellLevel ) rollData.item.level = spellLevel;
     const title = `${this.name} - ${game.i18n.localize("DND5E.OtherFormula")}`;
 
     // Invoke the roll and submit it to chat
-    const roll = new Roll(rollData.item.formula, rollData).roll();
+    const roll = await new Roll(rollData.item.formula, rollData).roll({async: true});
     roll.toMessage({
-      speaker    : ChatMessage.getSpeaker({actor: this.actor}),
-      flavor     : title,
-      rollMode   : game.settings.get("core", "rollMode"),
-      messageData: {"flags.dnd5e.roll": {type: "other", itemId: this.id}}
+      speaker: ChatMessage.getSpeaker({actor: this.actor}),
+      flavor: title,
+      rollMode: game.settings.get("core", "rollMode"),
+      messageData: {"flags.dnd5e.roll": {type: "other", itemId: this.id }}
     });
     return roll;
   }
@@ -1265,20 +1273,20 @@ export default class Item5e extends Item {
    */
   async rollRecharge() {
     const data = this.data.data;
-    if (!data.recharge.value) return;
+    if ( !data.recharge.value ) return;
 
     // Roll the check
-    const roll = new Roll("1d6").roll();
+    const roll = await new Roll("1d6").roll({async: true});
     const success = roll.total >= parseInt(data.recharge.value);
 
     // Display a Chat Message
     const promises = [roll.toMessage({
-      flavor : `${game.i18n.format("DND5E.ItemRechargeCheck", {name: this.name})} - ${game.i18n.localize(success ? "DND5E.ItemRechargeSuccess" : "DND5E.ItemRechargeFailure")}`,
+      flavor: `${game.i18n.format("DND5E.ItemRechargeCheck", {name: this.name})} - ${game.i18n.localize(success ? "DND5E.ItemRechargeSuccess" : "DND5E.ItemRechargeFailure")}`,
       speaker: ChatMessage.getSpeaker({actor: this.actor, token: this.actor.token})
     })];
 
     // Update the Item data
-    if (success) promises.push(this.update({"data.recharge.charged": true}));
+    if ( success ) promises.push(this.update({"data.recharge.charged": true}));
     return Promise.all(promises).then(() => roll);
   }
 
@@ -1289,8 +1297,8 @@ export default class Item5e extends Item {
    * @param {object} [options]  Roll configuration options provided to the d20Roll function.
    * @returns {Promise<Roll>}   A Promise which resolves to the created Roll instance.
    */
-  rollToolCheck(options = {}) {
-    if (this.type !== "tool") throw new Error("Wrong item type!");
+  rollToolCheck(options={}) {
+    if ( this.type !== "tool" ) throw new Error("Wrong item type!");
 
     // Prepare roll data
     const rollData = this.getRollData();
@@ -1334,13 +1342,13 @@ export default class Item5e extends Item {
       flavor: title,
       dialogOptions: {
         width: 400,
-        top  : options.event ? options.event.clientY - 80 : null,
-        left : window.innerWidth - 710
+        top: options.event ? options.event.clientY - 80 : null,
+        left: window.innerWidth - 710
       },
       chooseModifier: true,
       halflingLucky: this.actor.getFlag("dnd5e", "halflingLucky" ) || false,
       reliableTalent: (this.data.data.proficient >= 1) && this.actor.getFlag("dnd5e", "reliableTalent"),
-      messageData   : {"flags.dnd5e.roll": {type: "tool", itemId: this.id}}
+      messageData: {"flags.dnd5e.roll": {type: "tool", itemId: this.id }}
     }, options);
     rollConfig.event = options.event;
 
@@ -1356,13 +1364,13 @@ export default class Item5e extends Item {
    * @private
    */
   getRollData() {
-    if (!this.actor) return null;
+    if ( !this.actor ) return null;
     const rollData = this.actor.getRollData();
     rollData.item = foundry.utils.deepClone(this.data.data);
 
     // Include an ability score modifier if one exists
     const abl = this.abilityMod;
-    if (abl) {
+    if ( abl ) {
       const ability = rollData.abilities[abl];
       if ( !ability ) {
         console.warn(`Item ${this.name} in Actor ${this.actor.name} has an invalid item ability modifier of ${abl} defined`);
@@ -1375,7 +1383,6 @@ export default class Item5e extends Item {
 
   /* -------------------------------------------- */
   /*  Chat Message Helpers                        */
-
   /* -------------------------------------------- */
 
   /**
@@ -1408,7 +1415,7 @@ export default class Item5e extends Item {
 
     // Validate permission to proceed with the roll
     const isTargetted = action === "save";
-    if (!(isTargetted || game.user.isGM || message.isAuthor)) return;
+    if ( !( isTargetted || game.user.isGM || message.isAuthor ) ) return;
 
     // Recover the actor for the chat card
     const actor = await this._getChatCardActor(card);
@@ -1424,35 +1431,32 @@ export default class Item5e extends Item {
 
     // Handle different actions
     let targets;
-    switch (action) {
+    switch ( action ) {
       case "attack":
-        await item.rollAttack({event});
-        break;
+        await item.rollAttack({event}); break;
       case "damage":
       case "versatile":
         await item.rollDamage({
-          critical  : event.altKey,
-          event     : event,
+          critical: event.altKey,
+          event: event,
           spellLevel: spellLevel,
-          versatile : action === "versatile"
+          versatile: action === "versatile"
         });
         break;
       case "formula":
-        await item.rollFormula({event, spellLevel});
-        break;
+        await item.rollFormula({event, spellLevel}); break;
       case "save":
         targets = this._getChatCardTargets(card);
-        for (let token of targets) {
+        for ( let token of targets ) {
           const speaker = ChatMessage.getSpeaker({scene: canvas.scene, token: token});
-          await token.actor.rollAbilitySave(button.dataset.ability, {event, speaker});
+          await token.actor.rollAbilitySave(button.dataset.ability, { event, speaker });
         }
         break;
       case "toolCheck":
-        await item.rollToolCheck({event});
-        break;
+        await item.rollToolCheck({event}); break;
       case "placeTemplate":
         const template = game.dnd5e.canvas.AbilityTemplate.fromItem(item);
-        if (template) template.drawPreview();
+        if ( template ) template.drawPreview();
         break;
       case "abilityCheck":
         targets = this._getChatCardTargets(card);
@@ -1487,7 +1491,7 @@ export default class Item5e extends Item {
   /**
    * Get the Actor which is the author of a chat card
    * @param {HTMLElement} card    The chat card being used
-   * @returns {Actor|null}         The Actor entity or null
+   * @returns {Actor|null}        The Actor document or null
    * @private
    */
   static async _getChatCardActor(card) {
@@ -1509,13 +1513,13 @@ export default class Item5e extends Item {
   /**
    * Get the Actor which is the author of a chat card
    * @param {HTMLElement} card    The chat card being used
-   * @returns {Actor[]}            An Array of Actor entities, if any
+   * @returns {Actor[]}            An Array of Actor documents, if any
    * @private
    */
   static _getChatCardTargets(card) {
     let targets = canvas.tokens.controlled.filter(t => !!t.actor);
-    if (!targets.length && game.user.character) targets = targets.concat(game.user.character.getActiveTokens());
-    if (!targets.length) ui.notifications.warn(game.i18n.localize("DND5E.ActionWarningNoToken"));
+    if ( !targets.length && game.user.character ) targets = targets.concat(game.user.character.getActiveTokens());
+    if ( !targets.length ) ui.notifications.warn(game.i18n.localize("DND5E.ActionWarningNoToken"));
     return targets;
   }
 
@@ -1704,6 +1708,8 @@ export default class Item5e extends Item {
       return updates;
     }
 
+    if ( data.data?.proficient !== undefined ) return updates;
+
     // Some weapon types are always proficient
     const weaponProf = CONFIG.DND5E.weaponProficienciesMap[this.data.data.weaponType];
     if ( weaponProf === true ) updates["data.proficient"] = true;
@@ -1718,7 +1724,6 @@ export default class Item5e extends Item {
 
   /* -------------------------------------------- */
   /*  Factory Methods                             */
-
   /* -------------------------------------------- */
 
   /**
@@ -1753,7 +1758,7 @@ export default class Item5e extends Item {
     // Create the spell scroll data
     const spellScrollData = foundry.utils.mergeObject(scrollData, {
       name: `${game.i18n.localize("DND5E.SpellScroll")}: ${itemData.name}`,
-      img : itemData.img,
+      img: itemData.img,
       data: {
         "description.value": desc.trim(), source, actionType, activation, duration, target, range, damage, formula,
         save, level

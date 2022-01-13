@@ -23,7 +23,6 @@ export default class Actor5e extends Actor {
 
   /* -------------------------------------------- */
   /*  Properties                                  */
-
   /* -------------------------------------------- */
 
   /**
@@ -198,7 +197,7 @@ export default class Actor5e extends Actor {
   /** @inheritdoc */
   getRollData() {
     const data = super.getRollData();
-    data.prof = this.data.data.attributes.prof || 0;
+    data.prof = new Proficiency(this.data.data.attributes.prof, 1);
     data.classes = Object.entries(this.classes).reduce((obj, e) => {
       const [slug, cls] = e;
       obj[slug] = cls.data.data;
@@ -887,7 +886,7 @@ export default class Actor5e extends Actor {
    * @param {object} options      Options which configure how the skill check is rolled
    * @returns {Promise<Roll>}     A Promise which resolves to the created Roll instance
    */
-  rollSkill(skillId, options = {}) {
+  rollSkill(skillId, options={}) {
     const skl = this.data.data.skills[skillId];
     const abl = this.data.data.abilities[skl.ability];
     const bonuses = getProperty(this.data.data, "bonuses.abilities") || {};
@@ -944,7 +943,7 @@ export default class Actor5e extends Actor {
     const rollData = foundry.utils.mergeObject(options, {
       parts: parts,
       data: data,
-      title: game.i18n.format("DND5E.SkillPromptTitle", {skill: CONFIG.DND5E.skills[skillId]}),
+      title: `${game.i18n.format("DND5E.SkillPromptTitle", {skill: CONFIG.DND5E.skills[skillId]})}: ${this.name}`,
       halflingLucky: this.getFlag("dnd5e", "halflingLucky"),
       chooseModifier: true,
       defaultAbility: skl.ability,
@@ -968,7 +967,7 @@ export default class Actor5e extends Actor {
   rollAbility(abilityId, options={}) {
     const label = CONFIG.DND5E.abilities[abilityId];
     new Dialog({
-      title: game.i18n.format("DND5E.AbilityPromptTitle", {ability: label}),
+      title: `${game.i18n.format("DND5E.AbilityPromptTitle", {ability: label})}: ${this.name}`,
       content: `<p>${game.i18n.format("DND5E.AbilityPromptText", {ability: label})}</p>`,
       buttons: {
         test: {
@@ -1033,15 +1032,15 @@ export default class Actor5e extends Actor {
 
     // Roll and return
     const rollData = foundry.utils.mergeObject(options, {
-      parts         : parts,
-      data          : data,
+      parts: parts,
+      data: data,
       defaultAbility: data.defaultAbility,
-      title         : game.i18n.format("DND5E.AbilityPromptTitle", {ability: label}),
-      halflingLucky : this.getFlag("dnd5e", "halflingLucky"),
+      title: `${game.i18n.format("DND5E.AbilityPromptTitle", {ability: label})}: ${this.name}`,
+      halflingLucky: this.getFlag("dnd5e", "halflingLucky"),
       chooseModifier: true,
-      messageData   : {
-        speaker           : options.speaker || ChatMessage.getSpeaker({actor: this}),
-        "flags.dnd5e.roll": {type: "ability", abilityId}
+      messageData: {
+        speaker: options.speaker || ChatMessage.getSpeaker({actor: this}),
+        "flags.dnd5e.roll": {type: "ability", abilityId }
       }
     });
     return d20Roll(rollData);
@@ -1056,7 +1055,7 @@ export default class Actor5e extends Actor {
    * @param {object} options      Options which configure how ability tests are rolled
    * @returns {Promise<Roll>}     A Promise which resolves to the created Roll instance
    */
-  rollAbilitySave(abilityId, options = {}) {
+  rollAbilitySave(abilityId, options={}) {
     const label = CONFIG.DND5E.abilities[abilityId];
     const abl = this.data.data.abilities[abilityId];
 
@@ -1096,7 +1095,7 @@ export default class Actor5e extends Actor {
     const rollData = foundry.utils.mergeObject(options, {
       parts: parts,
       data: data,
-      title: game.i18n.format("DND5E.SavePromptTitle", {ability: label}),
+      title: `${game.i18n.format("DND5E.SavePromptTitle", {ability: label})}: ${this.name}`,
       halflingLucky: this.getFlag("dnd5e", "halflingLucky"),
       messageData: {
         speaker: options.speaker || ChatMessage.getSpeaker({actor: this}),
@@ -1146,7 +1145,7 @@ export default class Actor5e extends Actor {
     const rollData = foundry.utils.mergeObject(options, {
       parts: parts,
       data: data,
-      title: game.i18n.localize("DND5E.DeathSavingThrow"),
+      title: `${game.i18n.localize("DND5E.DeathSavingThrow")}: ${this.name}`,
       halflingLucky: this.getFlag("dnd5e", "halflingLucky"),
       targetValue: 10,
       messageData: {
@@ -1246,7 +1245,7 @@ export default class Actor5e extends Actor {
 
     // Prepare roll data
     const parts = [`1${denomination}`, "@abilities.con.mod"];
-    const title = game.i18n.localize("DND5E.HitDiceRoll");
+    const title = `${game.i18n.localize("DND5E.HitDiceRoll")}: ${this.name}`;
     const rollData = foundry.utils.deepClone(this.data.data);
 
     // Call the roll helper utility
@@ -1536,7 +1535,6 @@ export default class Actor5e extends Actor {
       updates["data.attributes.hp.value"] = Math.max(data.attributes.hp.value, Math.floor(max/2));
     } else {
       updates["data.attributes.hp.value"] = max;
-
     }
     if ( recoverTemp ) {
       updates["data.attributes.hp.temp"] = 0;
@@ -1890,22 +1888,24 @@ export default class Actor5e extends Actor {
   /* -------------------------------------------- */
 
   /**
-   * Add additional system-specific sidebar directory context menu options for Actor entities
+   * Add additional system-specific sidebar directory context menu options for Actor documents
    * @param {jQuery} html         The sidebar HTML
    * @param {Array} entryOptions  The default array of context menu options
    */
   static addDirectoryContextOptions(html, entryOptions) {
+    const useEntity = foundry.utils.isNewerVersion("9", game.version ?? game.data.version);
+    const idAttr = useEntity ? "entityId" : "documentId";
     entryOptions.push({
       name: "DND5E.PolymorphRestoreTransformation",
       icon: '<i class="fas fa-backward"></i>',
       callback: li => {
-        const actor = game.actors.get(li.data("entityId"));
+        const actor = game.actors.get(li.data(idAttr));
         return actor.revertOriginalForm();
       },
       condition: li => {
         const allowed = game.settings.get("dnd5e", "allowPolymorphing");
         if ( !allowed && !game.user.isGM ) return false;
-        const actor = game.actors.get(li.data("entityId"));
+        const actor = game.actors.get(li.data(idAttr));
         return actor && actor.isPolymorphed;
       }
     });
@@ -1982,7 +1982,6 @@ export default class Actor5e extends Actor {
 
   /** @inheritdoc */
   _onUpdate(data, options, userId) {
-
     super._onUpdate(data, options, userId);
     this._displayScrollingDamage(options.dhp);
   }
@@ -2037,9 +2036,9 @@ export default class Actor5e extends Actor {
    * @returns {Promise<ChatMessage|object|void>}  Dialog if `configureDialog` is true, else prepared dialog data.
    * @deprecated since dnd5e 1.2.0
    */
-  async useSpell(item, {configureDialog = true} = {}) {
+  async useSpell(item, {configureDialog=true}={}) {
     console.warn("The Actor5e#useSpell method has been deprecated in favor of Item5e#roll");
-    if (item.data.type !== "spell") throw new Error("Wrong Item type");
+    if ( item.data.type !== "spell" ) throw new Error("Wrong Item type");
     return item.roll();
   }
 }
