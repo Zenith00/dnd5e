@@ -7,7 +7,6 @@
  * @returns {string}  Final initiative formula for the actor.
  */
 export const _getInitiativeFormula = function() {
-  console.log("GETTING INITIATIVE FORMULA!!!!!!!!!!!!!!!!!!!!")
   let diceBase = game.settings.get("dnd5e", "initiativeDice");
 
   const actor = this.actor;
@@ -28,8 +27,7 @@ export const _getInitiativeFormula = function() {
     (init.prof.term !== "0") ? init.prof.term : null,
     (init.bonus !== 0) ? init.bonus : null
   ];
-  console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-  console.log(parts);
+
   // Ability Check Bonuses
   const dexCheckBonus = actorData.abilities.dex.bonuses?.check;
   const globalCheckBonus = actorData.bonuses?.abilities?.check;

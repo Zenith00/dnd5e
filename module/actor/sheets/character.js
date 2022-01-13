@@ -169,7 +169,9 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
         hasActions: true,
         dataset: {type: "feat", "activation.type": "action"}
       },
-      passive: {label: "DND5E.FeaturePassive", items: [], hasActions: false, dataset: {type: "feat"}}
+      passive: {label: "DND5E.FeaturePassive", items: [], hasActions: false, dataset: {type: "feat"}},
+      maneuvers: {label: "Maneuvers", items: []}
+
     };
     for (let f of feats) {
       if (f.data.activation.type) features.active.items.push(f);
@@ -235,6 +237,46 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
 
   /* -------------------------------------------- */
 
+  _getInitiativeFormula() {
+    let diceBase = game.settings.get("dnd5e", "initiativeDice");
+
+    const actor = this.actor;
+
+    const actorData = actor.data.data;
+    const init = actorData.attributes.init;
+    const rollData = actor.getRollData();
+    // Construct initiative formula parts
+    let nd = 1;
+    let mods = "";
+    if (actor.getFlag("dnd5e", "halflingLucky")) mods += "r1=1";
+    if (actor.getFlag("dnd5e", "initiativeAdv")) {
+      nd = 2;
+      mods += "kh";
+    }
+    const parts = [
+      `${nd}d${diceBase}${mods}`,
+      init.mod,
+      (init.prof.term !== "0") ? init.prof.term : null,
+      (init.bonus !== 0) ? init.bonus : null,
+      (init.special)
+    ];
+
+    // Ability Check Bonuses
+    const dexCheckBonus = actorData.abilities.dex.bonuses?.check;
+    const globalCheckBonus = actorData.bonuses?.abilities?.check;
+    if ( dexCheckBonus ) parts.push(Roll.replaceFormulaData(dexCheckBonus, rollData));
+    if ( globalCheckBonus ) parts.push(Roll.replaceFormulaData(globalCheckBonus, rollData));
+
+    // Optionally apply Dexterity tiebreaker
+    const tiebreaker = game.settings.get("dnd5e", "initiativeDexTiebreaker");
+    if ( tiebreaker ) parts.push(actor.data.data.abilities.dex.value / 100);
+    console.log(actorData.attributes)
+    console.log(parts);
+    return parts.filter(p => p !== null).join(" + ");
+
+  };
+
+
   /**
    * Handle mouse click events for character sheet actions.
    * @param {MouseEvent} event  The originating click event.
@@ -254,7 +296,9 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
       case "rollDeathSave":
         return this.actor.rollDeathSave({event: event});
       case "rollInitiative":
-        return this.actor.rollInitiative({createCombatants: true});
+        // return this.actor.rollInitiative({createCombatants: true});
+
+        return this.actor.rollInitiative({createCombatants: true, initiativeOptions: {formula: this._getInitiativeFormula() }});
     }
   }
 

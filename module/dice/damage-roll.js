@@ -136,11 +136,12 @@ export default class DamageRoll extends Roll {
     const powerAttack = allowPowerAttack ? {powerAttack: false} : {}
     console.log(powerAttack)
     // Render the Dialog inner HTML
+
     const content = await renderTemplate(template ?? this.constructor.EVALUATION_TEMPLATE, {
       formula: `${this.formula} + @bonus`,
       defaultRollMode,
       rollModes: CONFIG.Dice.rollModes,
-      options: powerAttack,
+      options: {powerAttack},
       i18n: {powerAttack:"Power Attack"},
     });
 

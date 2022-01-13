@@ -335,7 +335,6 @@ export default class Actor5e extends Actor {
     );
     data.attributes.martialChar = data.attributes.martialLevel >= Math.floor(((2/3)*data.details.level));
     data.attributes.martialProf =Math.floor((data.attributes.martialLevel + 7) / 4) ?? 0;
-    data.attributes.martialArmor = data.attributes.martialProf - 1 ?? 0;
 
     // Experience required for next level
     const xp = data.details.xp;
@@ -693,7 +692,7 @@ export default class Actor5e extends Actor {
     }
 
     // Compute total AC and return
-    ac.value = ac.base + ac.shield + ac.bonus + ac.cover + (this.data.data.attributes.martialArmor ?? 0);
+    ac.value = ac.base + ac.shield + ac.bonus + ac.cover;
     return ac;
   }
 
@@ -797,6 +796,8 @@ export default class Actor5e extends Actor {
     if ( isDead && (foundry.utils.getProperty(changed, "data.attributes.hp.value") > 0) ) {
       foundry.utils.setProperty(changed, "data.attributes.death.success", 0);
       foundry.utils.setProperty(changed, "data.attributes.death.failure", 0);
+      foundry.utils.setProperty(changed, "data.attributes.exhaustion", Math.max(6,this.data.data.attributes.exhaustion + 1));
+
     }
   }
 
@@ -1252,6 +1253,7 @@ export default class Actor5e extends Actor {
     const roll = await damageRoll({
       event: new Event("hitDie"),
       parts: parts,
+      actor: this,
       data: rollData,
       title: title,
       allowCritical: false,
@@ -1980,6 +1982,7 @@ export default class Actor5e extends Actor {
 
   /** @inheritdoc */
   _onUpdate(data, options, userId) {
+
     super._onUpdate(data, options, userId);
     this._displayScrollingDamage(options.dhp);
   }

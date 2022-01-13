@@ -329,14 +329,16 @@ export async function damageRoll({
   fastForward=false, event, allowCritical=true, template, title, dialogOptions, // Dialog configuration
   chatMessage=true, messageData={}, rollMode, speaker, flavor // Chat Message customization
 }={}) {
-  const allowPowerAttack = (data.item.weaponType === "martialM" || data.item.weaponType === "martialR") && actor.data.data.attributes.martialChar;
+  console.log(messageData);
+  console.log(messageData["flags.dnd5e.roll"]?.["type"] !== "hitDie" )
+  console.log(data)
+  const allowPowerAttack = (messageData["flags.dnd5e.roll"]?.["type"] !== "hitDie") && (data.item.weaponType === "martialM" || data.item.weaponType === "martialR") && actor.data.data.attributes.martialChar;
 
   // Handle input arguments
   const defaultRollMode = rollMode || game.settings.get("core", "rollMode");
   let formula = parts.join(" + ");
 
-  console.log("DICE.JS DAMAGE ROLL ");
-  console.log(parts)
+  // console.log("DICE.JS DAMAGE ROLL ");
 
 
     // if (!window.CombatReady?.EXPIRED) {
