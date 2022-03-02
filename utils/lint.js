@@ -21,14 +21,14 @@ const LINTING_PATHS = ["./dnd5e.js", "./module/"];
  */
 function lintJavascript() {
   const applyFixes = !!parsedArgs.fix;
-  const tasks = LINTING_PATHS.map((path) => {
+  const tasks = LINTING_PATHS.map(path => {
     const src = path.endsWith("/") ? `${path}**/*.js` : path;
     const dest = path.endsWith("/") ? path : `${path.split("/").slice(0, -1).join("/")}/`;
     return gulp
       .src(src)
-      .pipe(eslint({"fix": applyFixes}))
+      .pipe(eslint({fix: applyFixes}))
       .pipe(eslint.format())
-      .pipe(gulpIf((file) => file.eslint != null && file.eslint.fixed, gulp.dest(dest)));
+      .pipe(gulpIf(file => file.eslint != null && file.eslint.fixed, gulp.dest(dest)));
   });
   return mergeStream.call(null, tasks);
 }

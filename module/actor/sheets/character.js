@@ -32,19 +32,16 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
     if (hp.temp === 0) delete hp.temp;
     if (hp.tempmax === 0) delete hp.tempmax;
 
-    console.log(sheetData);
     ["primary", "secondary", "tertiary"].forEach(resName => {
-      console.log(resName);
-      console.log(sheetData.data.resources[resName]);
-      sheetData.data.resources[resName].name = sheetData.data.resources[resName].placeholder
-    })
+      sheetData.data.resources[resName].name = sheetData.data.resources[resName].placeholder;
+    });
 
 
     // Resources
     sheetData.resources = ["primary", "secondary", "tertiary", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth"].reduce((arr, r) => {
       let res = sheetData.data.resources[r] || {};
 
-      // if (!res.name) {
+      // If (!res.name) {
       //   res = {
       //     "value": 0,
       //     "max": null,
@@ -58,9 +55,9 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
 
       if (res.name === "secondary") {
         res.value = this.actor.items.reduce((prev, current) => {
-          return prev + ((current.name.includes("[R]") || current.name.toLowerCase().includes("potion")) ? 1 : 0)
+          return prev + ((current.name.includes("[R]") || current.name.toLowerCase().includes("potion")) ? 1 : 0);
         }, 0);
-        res.max = this.actor.data.data.prof + 1;
+        res.max = (this.actor.data.data?.prof?.term || 0) + 1;
       }
       if (res && res.max === 0) delete res.max;
       return arr.concat([res]);
@@ -228,7 +225,7 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
 
     // Short and Long Rest
     html.find(".short-rest").click(this._onShortRest.bind(this));
-    html.find('.medium-rest').click(this._onMediumRest.bind(this))
+    html.find(".medium-rest").click(this._onMediumRest.bind(this));
     html.find(".long-rest").click(this._onLongRest.bind(this));
 
     // Rollable sheet actions
@@ -258,7 +255,7 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
       init.mod,
       (init.prof.term !== "0") ? init.prof.term : null,
       (init.bonus !== 0) ? init.bonus : null,
-      (init.special)
+      (init.extra || 0)
     ];
 
     // Ability Check Bonuses
@@ -270,11 +267,9 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
     // Optionally apply Dexterity tiebreaker
     const tiebreaker = game.settings.get("dnd5e", "initiativeDexTiebreaker");
     if ( tiebreaker ) parts.push(actor.data.data.abilities.dex.value / 100);
-    console.log(actorData.attributes)
-    console.log(parts);
     return parts.filter(p => p !== null).join(" + ");
 
-  };
+  }
 
 
   /**
@@ -296,7 +291,7 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
       case "rollDeathSave":
         return this.actor.rollDeathSave({event: event});
       case "rollInitiative":
-        // return this.actor.rollInitiative({createCombatants: true});
+        // Return this.actor.rollInitiative({createCombatants: true});
 
         return this.actor.rollInitiative({createCombatants: true, initiativeOptions: {formula: this._getInitiativeFormula() }});
     }

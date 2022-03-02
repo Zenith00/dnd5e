@@ -275,7 +275,7 @@ export default class ActorSheet5e extends ActorSheet {
         attribution.push({
           label: game.i18n.localize("DND5E.ArmorClassNatural"),
           mode: CONST.ACTIVE_EFFECT_MODES.OVERRIDE,
-          value: ac.flat
+          value: ac.flat + (this.actor.type === "npc" ? game.settings.get("dnd5e", "globalMonsterBonusAC") : 0)
         });
         break;
 
@@ -294,7 +294,7 @@ export default class ActorSheet5e extends ActorSheet {
             value: ac.dex
           });
         }
-        // if(this.actor.data.data.attributes.martialChar && this.actor.data.data.attributes.martialProf   ) {
+        // If(this.actor.data.data.attributes.martialChar && this.actor.data.data.attributes.martialProf   ) {
         //   attribution.push({
         //     label: "Martial Enhancement",
         //     mode: CONST.ACTIVE_EFFECT_MODES.ADD,

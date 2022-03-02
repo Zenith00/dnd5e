@@ -266,7 +266,7 @@ DND5E.abilityConsumptionTypes = {
   attribute: "DND5E.ConsumeAttribute",
   material: "DND5E.ConsumeMaterial",
   charges: "DND5E.ConsumeCharges",
-  "hitDice":"DND5E.ConsumeHitDice"
+  hitDice: "DND5E.ConsumeHitDice"
 };
 
 /* -------------------------------------------- */
@@ -737,7 +737,7 @@ DND5E.healingTypes = {
  * Denominations of hit dice which can apply to classes.
  * @type {string[]}
  */
-DND5E.hitDieTypes = ["d6", "d8", "d10", "d12", "d14","d18"];
+DND5E.hitDieTypes = ["d6", "d8", "d10", "d12", "d14", "d18"];
 
 /* -------------------------------------------- */
 
@@ -908,28 +908,28 @@ DND5E.spellLevels = {
 };
 
 DND5E.spellPointCosts = {
-    1:"2 spell points",
-    2:"3 spell points",
-    3:"5 spell points",
-    4:"6 spell points",
-    5:"7 spell points",
-    6:"9 spell points",
-    7:"10 spell points",
-    8:"11 spell points",
-    9:"13 spell points",
-}
+  1: "2 spell points",
+  2: "3 spell points",
+  3: "5 spell points",
+  4: "6 spell points",
+  5: "7 spell points",
+  6: "9 spell points",
+  7: "10 spell points",
+  8: "11 spell points",
+  9: "13 spell points"
+};
 
 DND5E.spellPointCostsRaw = {
-    1:2,
-    2:3,
-    3:5,
-    4:6,
-    5:7,
-    6:9,
-    7:10,
-    8:11,
-    9:13,
-}
+  1: 2,
+  2: 3,
+  3: 5,
+  4: 6,
+  5: 7,
+  6: 9,
+  7: 10,
+  8: 11,
+  9: 13
+};
 
 DND5E.spellPointTotals = {
   1: 4,
@@ -952,7 +952,7 @@ DND5E.spellPointTotals = {
   18: 114 + 18,
   19: 123 + 19,
   20: 133 + 20
-}
+};
 
 /**
  * Spell scroll item ID within the `DND5E.sourcePacks` compendium for each level.
@@ -1180,7 +1180,7 @@ DND5E.characterFlags = {
     section: "DND5E.Feats",
     type: Boolean
   },
-  "spellPoints": {
+  spellPoints: {
     name: "Spell Points",
     hint: "Use Spell Points instead of Spell Slots (Sorcerers only)",
     section: "DND5E.Feats",
@@ -1271,20 +1271,18 @@ DND5E.characterFlags = {
  */
 DND5E.allowedActorFlags = ["isPolymorphed", "originalActor"].concat(Object.keys(DND5E.characterFlags));
 
-DND5E.computeMartialLevel = (classItem) => {
-  // console.log("Computing martial level: ");
-  // console.log(classItem);
-  if (["Ranger","Paladin","Artificer"].includes(classItem.data.name)){
+DND5E.computeMartialLevel = classItem => {
+  if (["Ranger", "Paladin", "Artificer"].includes(classItem.data.name)) {
     return Math.floor(classItem.data.data.levels / 2);
-  } else if (["Barbarian", "Monk"].includes(classItem.data.name)){
+  } else if (["Barbarian", "Monk", "Slayer"].includes(classItem.data.name)) {
     return classItem.data.data.levels;
   } else if (
-      (classItem.data.name === "Fighter" && classItem.data.data.subclass === "Eldritch Knight")
+    (classItem.data.name === "Fighter" && classItem.data.data.subclass === "Eldritch Knight")
       || (classItem.data.name === "Rogue" && classItem.data.data.subclass === "Arcane Trickster")) {
     return Math.floor(classItem.data.data.levels * (2/3));
-  } else if (["Fighter","Rogue"].includes(classItem.data.name)) {
+  } else if (["Fighter", "Rogue"].includes(classItem.data.name)) {
     return classItem.data.data.levels;
   } else {
     return 0;
   }
-}
+};

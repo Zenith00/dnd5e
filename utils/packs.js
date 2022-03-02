@@ -23,7 +23,7 @@ const PACK_SRC = "packs/src";
 
 /**
  * Cache of DBs so they aren't loaded repeatedly when determining IDs.
- * @type {Object.<string,Datastore>}
+ * @type {object<string, Datastore>}
  */
 const DB_CACHE = {};
 
@@ -36,10 +36,11 @@ const DB_CACHE = {};
  * Removes unwanted flags, permissions, and other data from entries before extracting or compiling.
  * @param {object} data  Data for a single entry to clean.
  * @param {object} [options]
+ * @param options.clearSourceId
  * @param {boolean} [clearSourceId]  Should the core sourceId flag be deleted.
  */
 function cleanPackEntry(data, { clearSourceId=true }={}) {
-  if ( data.permission ) data.permission = { "default": 0 };
+  if ( data.permission ) data.permission = { default: 0 };
   if ( clearSourceId ) delete data.flags?.core?.sourceId;
   delete data.flags?.importSource;
   delete data.flags?.exportSource;
@@ -50,8 +51,8 @@ function cleanPackEntry(data, { clearSourceId=true }={}) {
     if ( Object.keys(contents).length === 0 ) delete data.flags[key];
   });
 
-  if ( data.effects ) data.effects.forEach((i) => cleanPackEntry(i, { clearSourceId: false }));
-  if ( data.items ) data.items.forEach((i) => cleanPackEntry(i, { clearSourceId: false }));
+  if ( data.effects ) data.effects.forEach(i => cleanPackEntry(i, { clearSourceId: false }));
+  if ( data.items ) data.items.forEach(i => cleanPackEntry(i, { clearSourceId: false }));
   if ( data.data?.description?.value ) data.data.description.value = cleanString(data.data.description.value);
   if ( data.label ) data.label = cleanString(data.label);
   if ( data.name ) data.name = cleanString(data.name);
@@ -62,7 +63,7 @@ function cleanPackEntry(data, { clearSourceId=true }={}) {
  * Attempts to find an existing matching ID for an item of this name, otherwise generates a new unique ID.
  * @param {object} data  Data for the entry that needs an ID.
  * @param {string} pack  Name of the pack to which this item belongs.
- * @return {Promise.<string>}  Resolves once the ID is determined.
+ * @returns {Promise<string>}  Resolves once the ID is determined.
  */
 function determineId(data, pack) {
   const db_path = path.join(PACK_DEST, `${pack}.db`);
@@ -104,11 +105,11 @@ function cleanString(str) {
 function clean() {
   const packName = parsedArgs.pack;
   const entryName = parsedArgs.name?.toLowerCase();
-  const folders = fs.readdirSync(PACK_SRC, { withFileTypes: true }).filter((file) =>
+  const folders = fs.readdirSync(PACK_SRC, { withFileTypes: true }).filter(file =>
     file.isDirectory() && ( !packName || (packName === file.name) )
   );
 
-  const packs = folders.map((folder) => {
+  const packs = folders.map(folder => {
     return gulp.src(path.join(PACK_SRC, folder.name, "/**/*.json"))
       .pipe(through2.obj(async (file, enc, callback) => {
         const json = JSON.parse(file.contents.toString());
@@ -117,7 +118,7 @@ function clean() {
         cleanPackEntry(json);
         if ( !json._id ) json._id = await determineId(json, folder.name);
         fs.rmSync(file.path, { force: true });
-        fs.writeFileSync(file.path, JSON.stringify(json, null, 2) + "\n", { mode: 0o664 });
+        fs.writeFileSync(file.path, `${JSON.stringify(json, null, 2)}\n`, { mode: 0o664 });
         callback(null, file);
       }));
   });
@@ -140,11 +141,11 @@ exports.clean = clean;
 function compile() {
   const packName = parsedArgs.pack;
   // Determine which source folders to process
-  const folders = fs.readdirSync(PACK_SRC, { withFileTypes: true }).filter((file) =>
+  const folders = fs.readdirSync(PACK_SRC, { withFileTypes: true }).filter(file =>
     file.isDirectory() && ( !packName || (packName === file.name) )
   );
 
-  const packs = folders.map((folder) => {
+  const packs = folders.map(folder => {
     const filePath = path.join(PACK_DEST, `${folder.name}.db`);
     fs.rmSync(filePath, { force: true });
     const db = fs.createWriteStream(filePath, { flags: "a", mode: 0o664 });
@@ -155,9 +156,9 @@ function compile() {
         cleanPackEntry(json);
         data.push(json);
         callback(null, file);
-      }, (callback) => {
+      }, callback => {
         data.sort((lhs, rhs) => lhs._id > rhs._id ? 1 : -1);
-        data.forEach(entry => db.write(JSON.stringify(entry) + "\n"));
+        data.forEach(entry => db.write(`${JSON.stringify(entry)}\n`));
         callback();
       }));
   });
@@ -194,7 +195,7 @@ function extract() {
           const name = entry.name.toLowerCase();
           if ( entryName && (entryName !== name) ) return;
           cleanPackEntry(entry);
-          const output = JSON.stringify(entry, null, 2) + "\n";
+          const output = `${JSON.stringify(entry, null, 2)}\n`;
           const outputName = name.replace("'", "").replace(/[^a-z0-9]+/gi, " ").trim().replace(/\s+|-{2,}/g, "-");
           const subfolder = path.join(folder, _getSubfolderName(entry, filename));
           if ( !fs.existsSync(subfolder) ) fs.mkdirSync(subfolder, { recursive: true, mode: 0o775 });
@@ -214,7 +215,7 @@ exports.extract = extract;
  * Determine a subfolder name based on which pack is being extracted.
  * @param {object} data  Data for the entry being extracted.
  * @param {string} pack  Name of the pack.
- * @return {string}      Subfolder name the entry into which the entry should be created. An empty string if none.
+ * @returns {string}      Subfolder name the entry into which the entry should be created. An empty string if none.
  * @private
  */
 function _getSubfolderName(data, pack) {

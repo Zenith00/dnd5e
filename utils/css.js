@@ -13,7 +13,7 @@ const LESS_WATCH = ["less/*.less"];
 function compileLESS() {
   return gulp.src(LESS_SRC)
     .pipe(less())
-    .pipe(gulp.dest(LESS_DEST))
+    .pipe(gulp.dest(LESS_DEST));
 }
 const compile = gulp.series(compileLESS);
 

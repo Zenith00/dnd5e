@@ -164,7 +164,7 @@ export default class ItemSheet5e extends ItemSheet {
       ).reduce((obj, i) => {
         obj[i.name] = `${i.name} (${i.data.data.hitDice})`;
         return obj;
-      }, {})
+      }, {});
     }
 
     // Charges

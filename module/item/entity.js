@@ -392,10 +392,11 @@ export default class Item5e extends Item {
         rollData.prof = this.data.data.prof.term;
       }
     }
-
+    let baseBonuses = this.actor.type === "npc" ? {attack: game.settings.get("dnd5e", "globalMonsterBonusAtk")} : {};
     // Actor-level global bonus to attack rolls
-    const actorBonus = this.actor.data.data.bonuses?.[itemData.actionType] || {};
-    if ( actorBonus.attack ) parts.push(actorBonus.attack);
+    const actorBonus = this.actor.data.data.bonuses?.[itemData.actionType] || baseBonuses;
+
+    if ( actorBonus.attack || baseBonuses.attack ) parts.push(actorBonus.attack || baseBonuses.attack);
 
     // One-time bonus provided by consumed ammunition
     if ( (itemData.consume?.type === "ammo") && this.actor.items ) {
@@ -531,8 +532,8 @@ export default class Item5e extends Item {
       // Handle spell upcasting
       if ( requireSpellSlot ) {
         let spellCost = configuration.level.split(";");
-        if (spellCost[0] === "pact"){
-          consumeSpellLevel = "pact"
+        if (spellCost[0] === "pact") {
+          consumeSpellLevel = "pact";
         } else {
           consumeSpellLevel = spellCost[0];
           consumeSpellPoints = spellCost[1] === "true";
@@ -587,6 +588,7 @@ export default class Item5e extends Item {
    * @param {string|null} options.consumeSpellLevel The category of spell slot to consume, or null
    * @param {boolean} options.consumeUsage        Whether the item consumes a limited usage
    * @param {boolean} consumeSpellPoints  Use spell points instead of spell slots
+   * @param options.consumeSpellPoints
    * @returns {object|boolean}            A set of data changes to apply when the item is used, or false
    * @private
    */
@@ -618,19 +620,17 @@ export default class Item5e extends Item {
       if (Number.isNumeric(consumeSpellLevel)) consumeSpellLevel = `spell${consumeSpellLevel}`;
       const level = this.actor?.data.data.spells[consumeSpellLevel];
       const spells = Number(level?.value ?? 0);
-      const remainingSpellPoints = this.actor?.data.data.resources["fourth"]?.value || 0;
+      const remainingSpellPoints = this.actor?.data.data.resources.fourth?.value || 0;
       const spellPointCost = CONFIG.DND5E.spellPointCostsRaw[Number(consumeSpellLevel.substring("spell".length))];
 
-      console.log("Spells!");
-      console.log(spells);
-      console.log(consumeSpellPoints);
+
       if (spells === 0 && !(consumeSpellPoints && (remainingSpellPoints >= spellPointCost))) {
         const label = game.i18n.localize(consumeSpellLevel === "pact" ? "DND5E.SpellProgPact" : `DND5E.SpellLevel${id.level}`);
         ui.notifications.warn(game.i18n.format("DND5E.SpellCastNoSlots", {name: this.name, level: label}));
         return false;
       }
-      if (consumeSpellPoints){
-        actorUpdates['data.resources.fourth.value'] = remainingSpellPoints - spellPointCost;
+      if (consumeSpellPoints) {
+        actorUpdates["data.resources.fourth.value"] = remainingSpellPoints - spellPointCost;
       } else {
         actorUpdates[`data.spells.${consumeSpellLevel}.value`] = Math.max(spells - 1, 0);
       }
@@ -1030,18 +1030,18 @@ export default class Item5e extends Item {
 
     // Compose roll options
     let rollConfig = mergeObject({
-      parts        : parts,
-      actor        : this.actor,
-      data         : rollData,
-      title        : title,
-      flavor       : title,
-      speaker      : ChatMessage.getSpeaker({actor: this.actor}),
+      parts: parts,
+      actor: this.actor,
+      data: rollData,
+      title: title,
+      flavor: title,
+      speaker: ChatMessage.getSpeaker({actor: this.actor}),
       dialogOptions: {
         width: 400,
-        top  : options.event ? options.event.clientY - 80 : null,
-        left : window.innerWidth - 710
+        top: options.event ? options.event.clientY - 80 : null,
+        left: window.innerWidth - 710
       },
-      messageData  : {"flags.dnd5e.roll": {type: "attack", itemId: this.id}},
+      messageData: {"flags.dnd5e.roll": {type: "attack", itemId: this.id}}
 
     }, options);
     rollConfig.event = options.event;
@@ -1134,10 +1134,15 @@ export default class Item5e extends Item {
       }
     }
 
+
+    let baseBonuses = this.actor.type === "npc" ? {damage: game.settings.get("dnd5e", "globalMonsterBonusDmg")} : {};
     // Add damage bonus formula
     const actorBonus = getProperty(actorData, `bonuses.${itemData.actionType}`) || {};
+
     if ( actorBonus.damage && (parseInt(actorBonus.damage) !== 0) ) {
       parts.push(actorBonus.damage);
+    } else if (baseBonuses.damage && (parseInt(baseBonuses.damage) !== 0)) {
+      parts.push(baseBonuses.damage);
     }
 
     // Handle ammunition damage

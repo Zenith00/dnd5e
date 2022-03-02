@@ -12,7 +12,7 @@ export const _getInitiativeFormula = function() {
   const actor = this.actor;
   if ( !actor ) return `1d${diceBase}`;
   const actorData = actor.data.data;
-  const init = actorData.attributes.init;const rollData = actor.getRollData();
+  const init = actorData.attributes.init; const rollData = actor.getRollData();
   // Construct initiative formula parts
   let nd = 1;
   let mods = "";
@@ -26,6 +26,7 @@ export const _getInitiativeFormula = function() {
     init.mod,
     (init.prof.term !== "0") ? init.prof.term : null,
     (init.bonus !== 0) ? init.bonus : null
+    // Init.extra
   ];
 
   // Ability Check Bonuses

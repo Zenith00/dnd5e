@@ -4,17 +4,17 @@
  * @param {HTMLElement} html     Rendered contents of the message.
  * @param {object} data          Configuration data passed to the message.
  */
-export const highlightCriticalSuccessFailure = function (message, html, data) {
+export const highlightCriticalSuccessFailure = function(message, html, data) {
   const DECISIVE_RANGE = game.settings.get("dnd5e", "decisiveStrikeRange");
 
-  var midiRoll = message.data?.flags?.["midi-qol"]?.d20AttackRoll;
+  let midiRoll = message.data?.flags?.["midi-qol"]?.d20AttackRoll;
 
 
   if (midiRoll) {
 
     let crit_threshold = (game.actors.get(message.data.speaker.actor).data?.flags?.dnd5e?.weaponCriticalThreshold || 20);
     if (midiRoll >= (crit_threshold - DECISIVE_RANGE)) {
-      if (midiRoll >= crit_threshold){
+      if (midiRoll >= crit_threshold) {
         return;
       }
       else {
@@ -37,7 +37,7 @@ export const highlightCriticalSuccessFailure = function (message, html, data) {
 
   // Highlight successes and failures
   const critical = d.options.critical || 20;
-  const decisive = critical - game.settings.get("dnd5e","decisiveStrikeRange");
+  const decisive = critical - game.settings.get("dnd5e", "decisiveStrikeRange");
   const fumble = d.options.fumble || 1;
   if (message.data.flags?.dnd5e?.roll?.type !== "skill") {
     if (d.total >= critical) html.find(".dice-total").addClass("critical");
@@ -60,7 +60,7 @@ export const highlightCriticalSuccessFailure = function (message, html, data) {
  * @param {HTMLElement} html     Rendered contents of the message.
  * @param {object} data          Configuration data passed to the message.
  */
-export const displayChatActionButtons = function (message, html, data) {
+export const displayChatActionButtons = function(message, html, data) {
   const chatCard = html.find(".dnd5e.chat-card");
   if (chatCard.length > 0) {
     const flavor = html.find(".flavor-text");
@@ -91,35 +91,35 @@ export const displayChatActionButtons = function (message, html, data) {
  *
  * @returns {object[]}          The extended options Array including new context choices
  */
-export const addChatMessageContextOptions = function (html, options) {
+export const addChatMessageContextOptions = function(html, options) {
   let canApply = li => {
     const message = game.messages.get(li.data("messageId"));
     return message?.isRoll && message?.isContentVisible && canvas.tokens?.controlled.length;
   };
   options.push(
     {
-      name     : game.i18n.localize("DND5E.ChatContextDamage"),
-      icon     : '<i class="fas fa-user-minus"></i>',
+      name: game.i18n.localize("DND5E.ChatContextDamage"),
+      icon: '<i class="fas fa-user-minus"></i>',
       condition: canApply,
-      callback : li => applyChatCardDamage(li, 1)
+      callback: li => applyChatCardDamage(li, 1)
     },
     {
-      name     : game.i18n.localize("DND5E.ChatContextHealing"),
-      icon     : '<i class="fas fa-user-plus"></i>',
+      name: game.i18n.localize("DND5E.ChatContextHealing"),
+      icon: '<i class="fas fa-user-plus"></i>',
       condition: canApply,
-      callback : li => applyChatCardDamage(li, -1)
+      callback: li => applyChatCardDamage(li, -1)
     },
     {
-      name     : game.i18n.localize("DND5E.ChatContextDoubleDamage"),
-      icon     : '<i class="fas fa-user-injured"></i>',
+      name: game.i18n.localize("DND5E.ChatContextDoubleDamage"),
+      icon: '<i class="fas fa-user-injured"></i>',
       condition: canApply,
-      callback : li => applyChatCardDamage(li, 2)
+      callback: li => applyChatCardDamage(li, 2)
     },
     {
-      name     : game.i18n.localize("DND5E.ChatContextHalfDamage"),
-      icon     : '<i class="fas fa-user-shield"></i>',
+      name: game.i18n.localize("DND5E.ChatContextHalfDamage"),
+      icon: '<i class="fas fa-user-shield"></i>',
       condition: canApply,
-      callback : li => applyChatCardDamage(li, 0.5)
+      callback: li => applyChatCardDamage(li, 0.5)
     }
   );
   return options;

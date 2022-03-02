@@ -41,7 +41,6 @@ export default class ActiveEffect5e extends ActiveEffect {
    * @returns {Promise|null}        Promise that resolves when the changes are complete.
    */
   static onManageActiveEffect(event, owner) {
-    console.log("MANAGE!!");
     event.preventDefault();
     const a = event.currentTarget;
     const li = a.closest("li");

@@ -152,7 +152,7 @@ function _groupTermsByType(terms) {
     else type = term.constructor;
     const key = `${type.name.charAt(0).toLowerCase()}${type.name.substring(1)}s`;
 
-  // Push the term and the preceding OperatorTerm.
+    // Push the term and the preceding OperatorTerm.
     (obj[key] = obj[key] ?? []).push(terms[i - 1], term);
     return obj;
   }, {});
@@ -207,6 +207,7 @@ function _separateAnnotatedTerms(terms) {
  * @param {object} [config.speaker]        The ChatMessage speaker to pass when creating the chat
  * @param {string} [config.flavor]         Flavor text to use in the posted chat message
  *
+ * @param config.defaultAbility
  * @returns {Promise<D20Roll|null>}  The evaluated D20Roll, or null if the workflow was cancelled
  */
 export async function d20Roll({
@@ -216,16 +217,11 @@ export async function d20Roll({
   chatMessage=true, messageData={}, rollMode, speaker, flavor // Chat Message customization
 }={}) {
 
-  console.log("d20roll def")
-  console.log(defaultAbility)
-  console.log(data);
-
   // Handle input arguments
   const formula = ["1d20"].concat(parts).join(" + ");
   const {advantageMode, isFF} = _determineAdvantageMode({advantage, disadvantage, fastForward, event});
   const defaultRollMode = rollMode || game.settings.get("core", "rollMode");
   if ( chooseModifier && !isFF ) data.mod = "@mod";
-
   // Construct the D20Roll instance
   const roll = new CONFIG.Dice.D20Roll(formula, data, {
     flavor: flavor || title,
@@ -238,7 +234,6 @@ export async function d20Roll({
     halflingLucky,
     reliableTalent
   });
-
   // Prompt a Dialog to further configure the D20Roll
   if ( !isFF ) {
     const configured = await roll.configureDialog({
@@ -320,6 +315,7 @@ function _determineAdvantageMode({event, advantage=false, disadvantage=false, fa
  * @param {object} [config.speaker]        The ChatMessage speaker to pass when creating the chat
  * @param {string} [config.flavor]         Flavor text to use in the posted chat message
  *
+ * @param config.actor
  * @returns {Promise<DamageRoll|null>} The evaluated DamageRoll, or null if the workflow was canceled
  */
 export async function damageRoll({
@@ -329,27 +325,16 @@ export async function damageRoll({
   fastForward=false, event, allowCritical=true, template, title, dialogOptions, // Dialog configuration
   chatMessage=true, messageData={}, rollMode, speaker, flavor // Chat Message customization
 }={}) {
-  console.log(messageData);
-  console.log(messageData["flags.dnd5e.roll"]?.["type"] !== "hitDie" )
-  console.log(data)
-  const allowPowerAttack = (messageData["flags.dnd5e.roll"]?.["type"] !== "hitDie") && (data.item.weaponType === "martialM" || data.item.weaponType === "martialR") && actor.data.data.attributes.martialChar;
+  const allowPowerAttack = (messageData["flags.dnd5e.roll"]?.type !== "hitDie") && (data.item.weaponType === "martialM" || data.item.weaponType === "martialR") && actor.data.data.attributes.martialChar;
 
   // Handle input arguments
   const defaultRollMode = rollMode || game.settings.get("core", "rollMode");
   let formula = parts.join(" + ");
 
-  // console.log("DICE.JS DAMAGE ROLL ");
-
-
-    // if (!window.CombatReady?.EXPIRED) {
-    //   formula += `+ 1d5`
-    // }
-
 
   // Construct the DamageRoll instance
 
   const {isCritical, isFF} = _determineCriticalMode({critical, fastForward, event});
-  console.log(formula)
   let roll = new CONFIG.Dice.DamageRoll(formula, data, {
     flavor: flavor || title,
     critical: isFF ? isCritical : false,
@@ -360,9 +345,6 @@ export async function damageRoll({
     powerfulCritical: powerfulCritical ?? game.settings.get("dnd5e", "criticalDamageMaxDice")
   });
 
-  console.log("roll created!")
-  console.log(roll)
-
   // Prompt a Dialog to further configure the DamageRoll
   if ( !isFF ) {
     const configured = await roll.configureDialog({
@@ -371,17 +353,13 @@ export async function damageRoll({
       defaultCritical: isCritical,
       template,
       allowCritical,
-      allowPowerAttack,
+      allowPowerAttack
     }, dialogOptions);
     if ( configured === null ) return null;
   }
 
 
-
-
-  console.log("power attack, CBR handled")
-  console.log(roll.formula)
-  // if (allowPowerAttack && roll.options.powerAttack) {
+  // If (allowPowerAttack && roll.options.powerAttack) {
   //   if (data.item.weaponType === "martialM") {
   //     if (data.item.properties.two && !data.item.properties.rch) {
   //       roll.terms += [,new OperatorTerm({ operator: "+"}), ] ["1d8 + @attributes.martialProf"];

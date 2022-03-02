@@ -12,10 +12,6 @@
  */
 export default class DamageRoll extends Roll {
   constructor(formula, data, options) {
-    console.log("Initializing damageroll superclass with")
-    console.log(formula)
-    console.log(data)
-    console.log(options)
     super(formula, data, options);
     // For backwards compatibility, skip rolls which do not have the "critical" option defined
     if ( this.options.critical !== undefined ) this.configureDamage();
@@ -47,11 +43,9 @@ export default class DamageRoll extends Roll {
    */
   configureDamage() {
     let flatBonus = 0;
-    console.log("CONFIGURING DAMAGE!!")
-    console.log(this.terms)
+
     for ( let [i, term] of this.terms.entries() ) {
-      console.log(`Handling term ${i}:`);
-      console.log(term)
+
 
       // Multiply dice terms
       if ( term instanceof DiceTerm ) {
@@ -128,13 +122,14 @@ export default class DamageRoll extends Roll {
    * @param {string} [data.template]            A custom path to an HTML template to use instead of the default
    * @param {boolean} [data.allowCritical=true] Allow critical hit to be chosen as a possible damage mode
    * @param {object} options                  Additional Dialog customization options
+   * @param data.allowPowerAttack
+   * @param data.powerAttackFormula
    * @returns {Promise<D20Roll|null>}         A resulting D20Roll object constructed with the dialog, or null if the
    *                                          dialog was closed
    */
   async configureDialog({title, defaultRollMode, defaultCritical=false, template, allowCritical=true, allowPowerAttack = false, powerAttackFormula="" }={}, options={}) {
-    console.log(allowPowerAttack);
-    const powerAttack = allowPowerAttack ? {powerAttack: false} : {}
-    console.log(powerAttack)
+    const powerAttack = allowPowerAttack ? {powerAttack: false} : {};
+
     // Render the Dialog inner HTML
 
     const content = await renderTemplate(template ?? this.constructor.EVALUATION_TEMPLATE, {
@@ -142,10 +137,9 @@ export default class DamageRoll extends Roll {
       defaultRollMode,
       rollModes: CONFIG.Dice.rollModes,
       options: {powerAttack},
-      i18n: {powerAttack:"Power Attack"},
+      i18n: {powerAttack: "Power Attack"}
     });
 
-    console.log(content);
 
     // Create the Dialog window and await submission of the form
     return new Promise(resolve => {
@@ -180,6 +174,7 @@ export default class DamageRoll extends Roll {
    * Handle submission of the Roll evaluation configuration Dialog
    * @param {jQuery} html         The submitted dialog content
    * @param {boolean} isCritical  Is the damage a critical hit?
+   * @param isMaximized
    * @returns {DamageRoll}        This damage roll.
    * @private
    */
@@ -188,8 +183,6 @@ export default class DamageRoll extends Roll {
 
     // Append a situational bonus term
     if ( form.bonus.value ) {
-      console.log("HAS BONUS")
-      console.log(form.bonus.value)
       const bonus = new Roll(form.bonus.value, this.data);
       if ( !(bonus.terms[0] instanceof OperatorTerm) ) this.terms.push(new OperatorTerm({operator: "+"}));
       this.terms = this.terms.concat(bonus.terms);
@@ -198,13 +191,9 @@ export default class DamageRoll extends Roll {
     // Apply advantage or disadvantage
     this.options.critical = isCritical;
     this.options.maximized = isMaximized;
-    console.log(form);
-    console.log(form.rollMode);
-    console.log(form.powerAttack);
+
     this.options.rollMode = form.rollMode.value;
     this.options.powerAttack = html[0].querySelector("#powerAttack").checked;
-    console.log("DIALOG SUBMITTED, CONFIGURING DAMAGE")
-    console.log(this.terms)
     this.configureDamage();
     return this;
   }

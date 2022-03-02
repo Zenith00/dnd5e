@@ -34,7 +34,7 @@ export default class D20Roll extends Roll {
     ADVANTAGE: 1,
     SUPERADVANTAGE: 2,
     DISADVANTAGE: -1,
-    SUPERDISADVANTAGE: -2,
+    SUPERDISADVANTAGE: -2
   }
 
   /**
@@ -174,8 +174,6 @@ export default class D20Roll extends Roll {
    */
   async configureDialog({title, defaultRollMode, defaultAction=D20Roll.ADV_MODE.NORMAL, chooseModifier=false,
     defaultAbility, template}={}, options={}) {
-  console.log("config with default ability")
-    console.log(defaultAbility);
     // Render the Dialog inner HTML
     const content = await renderTemplate(template ?? this.constructor.EVALUATION_TEMPLATE, {
       formula: `${this.formula} + @bonus`,

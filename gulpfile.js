@@ -1,8 +1,8 @@
-const gulp = require('gulp');
+const gulp = require("gulp");
 
-const css = require('./utils/css.js');
+const css = require("./utils/css.js");
 const linting = require("./utils/lint.js");
-const packs = require('./utils/packs.js');
+const packs = require("./utils/packs.js");
 
 
 exports.default = gulp.series(

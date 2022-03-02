@@ -71,16 +71,16 @@ export const registerSystemSettings = function() {
     config: true,
     default: "20",
     type: Number
-  })
+  });
 
-    game.settings.register("dnd5e", "forceSecretDeathSave", {
+  game.settings.register("dnd5e", "forceSecretDeathSave", {
     name: "Secret Death Saves",
     hint: "Force Death Saves to be GM-Only Whispers",
     scope: "world",
     config: true,
     default: false,
     type: Boolean
-  })
+  });
 
   game.settings.register("dnd5e", "decisiveStrikeRange", {
     name: "SETTINGS.5eDecisiveRangeN",
@@ -182,5 +182,46 @@ export const registerSystemSettings = function() {
     config: true,
     type: Boolean,
     default: false
+  });
+
+
+  // Critical Damage Maximize
+  game.settings.register("dnd5e", "globalMonsterBonusAtk", {
+    name: "Global Monster Bonus Attack",
+    hint: "Global Monster Bonus Attack",
+    scope: "world",
+    config: true,
+    type: Number,
+    default: 0
+  });
+
+  // Critical Damage Maximize
+  game.settings.register("dnd5e", "globalMonsterBonusDmg", {
+    name: "Global Monster Bonus Damage",
+    hint: "Global Monster Bonus Damage",
+    scope: "world",
+    config: true,
+    type: Number,
+    default: 0
+  });
+
+  // Critical Damage Maximize
+  game.settings.register("dnd5e", "globalMonsterBonusAC", {
+    name: "Global Monster Bonus AC",
+    hint: "Global Monster Bonus AC",
+    scope: "world",
+    config: true,
+    type: Number,
+    default: 0
+  });
+
+  // Critical Damage Maximize
+  game.settings.register("dnd5e", "globalMonsterBonusSave", {
+    name: "Global Monster Bonus Saves",
+    hint: "Global Monster Bonus Saves",
+    scope: "world",
+    config: true,
+    type: Number,
+    default: 0
   });
 };

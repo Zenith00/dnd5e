@@ -24,7 +24,7 @@ export default class MediumRestDialog extends Dialog {
   /* -------------------------------------------- */
 
   /** @override */
-	static get defaultOptions() {
+  static get defaultOptions() {
 	  return mergeObject(super.defaultOptions, {
 	    template: "systems/dnd5e/templates/apps/medium-rest.html",
       classes: ["dnd5e", "dialog"]
@@ -88,7 +88,7 @@ export default class MediumRestDialog extends Dialog {
    * A helper constructor function which displays the Medium Rest dialog and returns a Promise once it's workflow has
    * been resolved.
    * @param {Actor5e} actor
-   * @return {Promise}
+   * @returns {Promise}
    */
   static async mediumRestDialog({actor}={}) {
     return new Promise((resolve, reject) => {
@@ -100,8 +100,7 @@ export default class MediumRestDialog extends Dialog {
             label: game.i18n.localize("DND5E.Rest"),
             callback: html => {
               let newDay = false;
-              if (game.settings.get("dnd5e", "restVariant") === "gritty")
-                newDay = html.find('input[name="newDay"]')[0].checked;
+              if (game.settings.get("dnd5e", "restVariant") === "gritty") newDay = html.find('input[name="newDay"]')[0].checked;
               resolve(newDay);
             }
           },
@@ -124,7 +123,7 @@ export default class MediumRestDialog extends Dialog {
    * workflow has been resolved.
    * @deprecated
    * @param {Actor5e} actor
-   * @return {Promise}
+   * @returns {Promise}
    */
   static async longRestDialog({actor}={}) {
     console.warn("WARNING! MediumRestDialog.longRestDialog has been deprecated, use LongRestDialog.longRestDialog instead.");

@@ -85,6 +85,7 @@ export default class AbilityUseDialog extends Dialog {
   /**
    * Get dialog data related to limited spell slots.
    * @param {object} actorData  Data from the actor using the spell.
+   * @param actor
    * @param {object} itemData   Data from the spell being used.
    * @param {object} data       Data for the dialog being presented.
    * @returns {object}          Modified dialog data.
@@ -112,30 +113,29 @@ export default class AbilityUseDialog extends Dialog {
       if ( max > 0 ) lmax = i;
       arr.push({
         level: i,
-        label:  (i > 0 ? game.i18n.format("DND5E.SpellLevelSlot", {level: label, n: slots})  : label),
+        label: (i > 0 ? game.i18n.format("DND5E.SpellLevelSlot", {level: label, n: slots}) : label),
         canCast: max > 0,
         hasSlots: slots > 0,
-        isSpellPoints: false,
+        isSpellPoints: false
       });
       return arr;
     }, []).filter(sl => sl.level <= lmax);
 
     if (usesSpellPoints) {
-      for(let i=1; i <= 9; i++){
-        if (((actorData.classes["sorcerer"].levels +1 )/ 2) >= i && i >= lvl){
-            spellLevels.push({
-              level: i,
-              label: `${CONFIG.DND5E.spellPointCosts[i]} (${CONFIG.DND5E.spellLevels[i]})`,
-              canCast: actorData.resources["fourth"].value >= CONFIG.DND5E.spellPointCostsRaw[i],
-              hasSlots: true,
-              isSpellPoints: true,
-            })
+      for (let i=1; i <= 9; i++) {
+        if (((actorData.classes.sorcerer.levels +1 )/ 2) >= i && i >= lvl) {
+          spellLevels.push({
+            level: i,
+            label: `${CONFIG.DND5E.spellPointCosts[i]} (${CONFIG.DND5E.spellLevels[i]})`,
+            canCast: actorData.resources.fourth.value >= CONFIG.DND5E.spellPointCostsRaw[i],
+            hasSlots: true,
+            isSpellPoints: true
+          });
         }
 
       }
     }
 
-    console.log("handled spell points...")
 
     // If this character has pact slots, present them as an option for casting the spell.
     const pact = actorData.spells.pact;
@@ -145,10 +145,10 @@ export default class AbilityUseDialog extends Dialog {
         label: `${game.i18n.format("DND5E.SpellLevelPact", {level: pact.level, n: pact.value})}`,
         canCast: true,
         hasSlots: pact.value > 0,
-        isSpellPoints: false,
+        isSpellPoints: false
       });
     }
-    const canCast = spellLevels.some(l => l.hasSlots) || (usesSpellPoints &&  actorData.resources["fourth"].value >= CONFIG.DND5E.spellPointCostsRaw[lvl]);
+    const canCast = spellLevels.some(l => l.hasSlots) || (usesSpellPoints && actorData.resources.fourth.value >= CONFIG.DND5E.spellPointCostsRaw[lvl]);
     if ( !canCast ) data.errors.push(game.i18n.format("DND5E.SpellCastNoSlots", {
       level: CONFIG.DND5E.spellLevels[lvl],
       name: data.item.name
