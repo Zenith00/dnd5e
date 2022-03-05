@@ -345,6 +345,7 @@ export default class Actor5e extends Actor {
     }
     data.resources.fifth.label = "Exertion";
     data.resources.fifth.sr = true;
+    data.resources.fifth.lr = true;
     data.resources.fifth.max = (data.attributes.martialProf === 1 ? 0 : data.attributes.martialProf) * 2;
     data.resources.secondary.label = "Resonance";
     data.resources.secondary.max = data.attributes.prof;
