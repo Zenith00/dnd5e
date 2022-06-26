@@ -17,7 +17,7 @@ jobs:
     - name: repo-sync
       uses: repo-sync/github-sync@v2
       with:
-        source_repo: "https://gitlab.com/foundrynet/dnd5e.git"
+        source_repo: "https://github.com/foundryvtt/dnd5e.git"
         source_branch: "master"
         destination_branch: "upstream"
         github_token: ${{ secrets.GIT_AT }}
