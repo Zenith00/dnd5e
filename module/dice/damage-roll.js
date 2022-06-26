@@ -14,7 +14,7 @@ export default class DamageRoll extends Roll {
   constructor(formula, data, options) {
     super(formula, data, options);
     // For backwards compatibility, skip rolls which do not have the "critical" option defined
-    if ( this.options.critical !== undefined ) this.configureDamage();
+    if ( (this.options.critical !== undefined) && !this.options.configured ) this.configureDamage();
   }
 
   /**
@@ -94,6 +94,9 @@ export default class DamageRoll extends Roll {
 
     // Re-compile the underlying formula
     this._formula = this.constructor.getFormula(this.terms);
+
+    // Mark configuration as complete
+    this.options.configured = true;
   }
 
   /* -------------------------------------------- */

@@ -1,4 +1,7 @@
 import ActorSheet5e from "./base.js";
+import { AdvancementConfirmationDialog } from "../../advancement/advancement-confirmation-dialog.js";
+import { AdvancementManager } from "../../advancement/advancement-manager.js";
+
 
 /**
  * An Actor sheet for player character type actors.
@@ -12,9 +15,7 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
    */
   static get defaultOptions() {
     return mergeObject(super.defaultOptions, {
-      classes: ["dnd5e", "sheet", "actor", "character"],
-      width: 720,
-      height: 680
+      classes: ["dnd5e", "sheet", "actor", "character"]
     });
   }
 
@@ -41,15 +42,6 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
     sheetData.resources = ["primary", "secondary", "tertiary", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth"].reduce((arr, r) => {
       let res = sheetData.data.resources[r] || {};
 
-      // If (!res.name) {
-      //   res = {
-      //     "value": 0,
-      //     "max": null,
-      //     "sr": false,
-      //     "lr": false,
-      //     "label": ""
-      //   }
-      // }
       res.name = r;
       res.placeholder = game.i18n.localize(`DND5E.Resource${r.titleCase()}`);
 
@@ -62,7 +54,6 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
       if (res && res.max === 0) delete res.max;
       return arr.concat([res]);
     }, []);
-
 
     // Experience Tracking
     sheetData.disableExperience = game.settings.get("dnd5e", "disableExperienceTracking");
@@ -91,16 +82,16 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
 
     // Categorize items as inventory, spellbook, features, and classes
     const inventory = {
-      weapon: {label: "DND5E.ItemTypeWeaponPl", items: [], dataset: {type: "weapon"}},
-      equipment: {label: "DND5E.ItemTypeEquipmentPl", items: [], dataset: {type: "equipment"}},
-      consumable: {label: "DND5E.ItemTypeConsumablePl", items: [], dataset: {type: "consumable"}},
-      tool: {label: "DND5E.ItemTypeToolPl", items: [], dataset: {type: "tool"}},
-      backpack: {label: "DND5E.ItemTypeContainerPl", items: [], dataset: {type: "backpack"}},
-      loot: {label: "DND5E.ItemTypeLootPl", items: [], dataset: {type: "loot"}}
+      weapon: { label: "DND5E.ItemTypeWeaponPl", items: [], dataset: {type: "weapon"} },
+      equipment: { label: "DND5E.ItemTypeEquipmentPl", items: [], dataset: {type: "equipment"} },
+      consumable: { label: "DND5E.ItemTypeConsumablePl", items: [], dataset: {type: "consumable"} },
+      tool: { label: "DND5E.ItemTypeToolPl", items: [], dataset: {type: "tool"} },
+      backpack: { label: "DND5E.ItemTypeContainerPl", items: [], dataset: {type: "backpack"} },
+      loot: { label: "DND5E.ItemTypeLootPl", items: [], dataset: {type: "loot"} }
     };
 
     // Partition items by category
-    let [items, spells, feats, classes] = data.items.reduce((arr, item) => {
+    let {items, spells, feats, backgrounds, classes, subclasses} = data.items.reduce((obj, item) => {
 
       // Item details
       item.img = item.img || CONST.DEFAULT_TOKEN;
@@ -127,16 +118,15 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
       // Item toggle state
       this._prepareItemToggleState(item);
 
-      // Primary Class
-      if (item.type === "class") item.isOriginalClass = (item._id === this.actor.data.data.details.originalClass);
-
       // Classify items into types
-      if (item.type === "spell") arr[1].push(item);
-      else if (item.type === "feat") arr[2].push(item);
-      else if (item.type === "class") arr[3].push(item);
-      else if (Object.keys(inventory).includes(item.type)) arr[0].push(item);
-      return arr;
-    }, [[], [], [], []]);
+      if ( item.type === "spell" ) obj.spells.push(item);
+      else if ( item.type === "feat" ) obj.feats.push(item);
+      else if ( item.type === "background" ) obj.backgrounds.push(item);
+      else if ( item.type === "class" ) obj.classes.push(item);
+      else if ( item.type === "subclass" ) obj.subclasses.push(item);
+      else if ( Object.keys(inventory).includes(item.type) ) obj.items.push(item);
+      return obj;
+    }, { items: [], spells: [], feats: [], backgrounds: [], classes: [], subclasses: [] });
 
     // Apply active item filters
     items = this._filterItems(items, this._filters.inventory);
@@ -144,7 +134,7 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
     feats = this._filterItems(feats, this._filters.features);
 
     // Organize items
-    for (let i of items) {
+    for ( let i of items ) {
       i.data.quantity = i.data.quantity || 0;
       i.data.weight = i.data.weight || 0;
       i.totalWeight = (i.data.quantity * i.data.weight).toNearest(0.1);
@@ -157,31 +147,54 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
       return (s.data.level > 0) && (s.data.preparation.mode === "prepared") && s.data.preparation.prepared;
     }).length;
 
+    // Sort classes and interleave matching subclasses, put unmatched subclasses into features so they don't disappear
+    classes.sort((a, b) => b.data.levels - a.data.levels);
+    const maxLevelDelta = CONFIG.DND5E.maxLevel - this.actor.data.data.details.level;
+    classes = classes.reduce((arr, cls) => {
+      cls.availableLevels = Array.fromRange(CONFIG.DND5E.maxLevel + 1).slice(1).map(level => {
+        const delta = level - cls.data.levels;
+        return { level, delta, disabled: delta > maxLevelDelta };
+      });
+      arr.push(cls);
+      const identifier = cls.data.identifier || cls.name.slugify({strict: true});
+      const subclass = subclasses.findSplice(s => s.data.classIdentifier === identifier);
+      if ( subclass ) arr.push(subclass);
+      return arr;
+    }, []);
+    for ( const subclass of subclasses ) {
+      feats.push(subclass);
+      this.actor._preparationWarnings.push(game.i18n.format("DND5E.SubclassMismatchWarn", {
+        name: subclass.name, class: subclass.data.classIdentifier }));
+    }
+
     // Organize Features
     const features = {
-      classes: {label: "DND5E.ItemTypeClassPl", items: [], hasActions: false, dataset: {type: "class"}, isClass: true},
+      background: {
+        label: "DND5E.ItemTypeBackground", items: backgrounds,
+        hasActions: false, dataset: {type: "background"} },
+      classes: {
+        label: "DND5E.ItemTypeClassPl", items: classes,
+        hasActions: false, dataset: {type: "class"}, isClass: true },
       active: {
-        label: "DND5E.FeatureActive",
-        items: [],
-        hasActions: true,
-        dataset: {type: "feat", "activation.type": "action"}
-      },
-      passive: {label: "DND5E.FeaturePassive", items: [], hasActions: false, dataset: {type: "feat"}},
-      maneuvers: {label: "Maneuvers", items: []}
-
+        label: "DND5E.FeatureActive", items: [],
+        hasActions: true, dataset: {type: "feat", "activation.type": "action"} },
+      passive: {
+        label: "DND5E.FeaturePassive", items: [],
+        hasActions: false, dataset: {type: "feat"} }
     };
-    for (let f of feats) {
-      if (f.data.activation.type) features.active.items.push(f);
+    for ( let f of feats ) {
+      if ( f.data.activation?.type ) features.active.items.push(f);
       else features.passive.items.push(f);
     }
-    classes.sort((a, b) => b.data.levels - a.data.levels);
-    features.classes.items = classes;
 
     // Assign and return
     data.inventory = Object.values(inventory);
     data.spellbook = spellbook;
     data.preparedSpells = nPrepared;
     data.features = Object.values(features);
+
+    // Labels
+    data.labels.background = backgrounds[0]?.name;
   }
 
   /* -------------------------------------------- */
@@ -196,11 +209,12 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
       const isAlways = getProperty(item.data, "preparation.mode") === "always";
       const isPrepared = getProperty(item.data, "preparation.prepared");
       item.toggleClass = isPrepared ? "active" : "";
-      if (isAlways) item.toggleClass = "fixed";
-      if (isAlways) item.toggleTitle = CONFIG.DND5E.spellPreparationModes.always;
-      else if (isPrepared) item.toggleTitle = CONFIG.DND5E.spellPreparationModes.prepared;
+      if ( isAlways ) item.toggleClass = "fixed";
+      if ( isAlways ) item.toggleTitle = CONFIG.DND5E.spellPreparationModes.always;
+      else if ( isPrepared ) item.toggleTitle = CONFIG.DND5E.spellPreparationModes.prepared;
       else item.toggleTitle = game.i18n.localize("DND5E.SpellUnprepared");
-    } else {
+    }
+    else {
       const isActive = getProperty(item.data, "equipped");
       item.toggleClass = isActive ? "active" : "";
       item.toggleTitle = game.i18n.localize(isActive ? "DND5E.Equipped" : "DND5E.Unequipped");
@@ -208,7 +222,6 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
   }
 
   /* -------------------------------------------- */
-
   /*  Event Listeners and Handlers
   /* -------------------------------------------- */
 
@@ -218,14 +231,16 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
    */
   activateListeners(html) {
     super.activateListeners(html);
-    if (!this.isEditable) return;
+    if ( !this.isEditable ) return;
+
+    // Manage Class Levels
+    html.find(".level-selector").change(this._onLevelChange.bind(this));
 
     // Item State Toggling
     html.find(".item-toggle").click(this._onToggleItem.bind(this));
 
     // Short and Long Rest
     html.find(".short-rest").click(this._onShortRest.bind(this));
-    html.find(".medium-rest").click(this._onMediumRest.bind(this));
     html.find(".long-rest").click(this._onLongRest.bind(this));
 
     // Rollable sheet actions
@@ -233,44 +248,6 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
   }
 
   /* -------------------------------------------- */
-
-  _getInitiativeFormula() {
-    let diceBase = game.settings.get("dnd5e", "initiativeDice");
-
-    const actor = this.actor;
-
-    const actorData = actor.data.data;
-    const init = actorData.attributes.init;
-    const rollData = actor.getRollData();
-    // Construct initiative formula parts
-    let nd = 1;
-    let mods = "";
-    if (actor.getFlag("dnd5e", "halflingLucky")) mods += "r1=1";
-    if (actor.getFlag("dnd5e", "initiativeAdv")) {
-      nd = 2;
-      mods += "kh";
-    }
-    const parts = [
-      `${nd}d${diceBase}${mods}`,
-      init.mod,
-      (init.prof.term !== "0") ? init.prof.term : null,
-      (init.bonus !== 0) ? init.bonus : null,
-      (init.extra || 0)
-    ];
-
-    // Ability Check Bonuses
-    const dexCheckBonus = actorData.abilities.dex.bonuses?.check;
-    const globalCheckBonus = actorData.bonuses?.abilities?.check;
-    if ( dexCheckBonus ) parts.push(Roll.replaceFormulaData(dexCheckBonus, rollData));
-    if ( globalCheckBonus ) parts.push(Roll.replaceFormulaData(globalCheckBonus, rollData));
-
-    // Optionally apply Dexterity tiebreaker
-    const tiebreaker = game.settings.get("dnd5e", "initiativeDexTiebreaker");
-    if ( tiebreaker ) parts.push(actor.data.data.abilities.dex.value / 100);
-    return parts.filter(p => p !== null).join(" + ");
-
-  }
-
 
   /**
    * Handle mouse click events for character sheet actions.
@@ -281,7 +258,7 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
   _onSheetAction(event) {
     event.preventDefault();
     const button = event.currentTarget;
-    switch (button.dataset.action) {
+    switch ( button.dataset.action ) {
       case "convertCurrency":
         return Dialog.confirm({
           title: `${game.i18n.localize("DND5E.CurrencyConvert")}`,
@@ -291,10 +268,38 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
       case "rollDeathSave":
         return this.actor.rollDeathSave({event: event});
       case "rollInitiative":
-        // Return this.actor.rollInitiative({createCombatants: true});
-
-        return this.actor.rollInitiative({createCombatants: true, initiativeOptions: {formula: this._getInitiativeFormula() }});
+        return this.actor.rollInitiative({createCombatants: true});
     }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Respond to a new level being selected from the level selector.
+   * @param {Event} event                           The originating change.
+   * @returns {Promise<AdvancementManager|Item5e>}  Manager if advancements needed, otherwise updated class item.
+   * @private
+   */
+  async _onLevelChange(event) {
+    event.preventDefault();
+    const delta = Number(event.target.value);
+    const classId = event.target.closest(".item")?.dataset.itemId;
+    if ( !delta || !classId ) return;
+
+    const classItem = this.actor.items.get(classId);
+    if ( classItem.hasAdvancement && !game.settings.get("dnd5e", "disableAdvancements") ) {
+      const manager = AdvancementManager.forLevelChange(this.actor, classId, delta);
+      if ( manager.steps.length ) {
+        if ( delta > 0 ) return manager.render(true);
+        try {
+          const shouldRemoveAdvancements = await AdvancementConfirmationDialog.forLevelDown(classItem);
+          if ( shouldRemoveAdvancements ) return manager.render(true);
+        } catch(err) {
+          return;
+        }
+      }
+    }
+    return classItem.update({"data.levels": classItem.data.data.levels + delta});
   }
 
   /* -------------------------------------------- */
@@ -341,27 +346,43 @@ export default class ActorSheet5eCharacter extends ActorSheet5e {
     return this.actor.longRest();
   }
 
-  async _onMediumRest(event) {
-    event.preventDefault();
-    await this._onSubmit(event);
-    return this.actor.mediumRest();
-  }
-
   /* -------------------------------------------- */
 
   /** @override */
   async _onDropItemCreate(itemData) {
 
     // Increment the number of class levels a character instead of creating a new item
-    if (itemData.type === "class") {
-      const cls = this.actor.itemTypes.class.find(c => c.name === itemData.name);
-      let priorLevel = cls?.data.data.levels ?? 0;
-      if (cls) {
-        const next = Math.min(priorLevel + 1, 20 + priorLevel - this.actor.data.data.details.level);
-        if (next > priorLevel) {
-          itemData.levels = next;
-          return cls.update({"data.levels": next});
+    if ( itemData.type === "class" ) {
+      itemData.data.levels = Math.min(itemData.data.levels,
+        CONFIG.DND5E.maxLevel - this.actor.data.data.details.level);
+      if ( itemData.data.levels <= 0 ) return ui.notifications.error(
+        game.i18n.format("DND5E.MaxCharacterLevelExceededWarn", {max: CONFIG.DND5E.maxLevel})
+      );
+
+      const cls = this.actor.itemTypes.class.find(c => c.identifier === itemData.data.identifier);
+      if ( cls ) {
+        const priorLevel = cls.data.data.levels;
+        if ( cls.hasAdvancement && !game.settings.get("dnd5e", "disableAdvancements") ) {
+          const manager = AdvancementManager.forLevelChange(this.actor, cls.id, itemData.data.levels);
+          if ( manager.steps.length ) return manager.render(true);
         }
+        return cls.update({"data.levels": priorLevel + itemData.data.levels});
+      }
+    }
+
+    // If a subclass is dropped, ensure it doesn't match another subclass with the same identifier
+    else if ( itemData.type === "subclass" ) {
+      const other = this.actor.itemTypes.subclass.find(i => i.identifier === itemData.data.identifier);
+      if ( other ) {
+        return ui.notifications.error(game.i18n.format("DND5E.SubclassDuplicateError", {
+          identifier: other.identifier
+        }));
+      }
+      const cls = this.actor.itemTypes.class.find(i => i.identifier === itemData.data.classIdentifier);
+      if ( cls && cls.subclass ) {
+        return ui.notifications.error(game.i18n.format("DND5E.SubclassAssignmentError", {
+          class: cls.name, subclass: cls.subclass.name
+        }));
       }
     }
 

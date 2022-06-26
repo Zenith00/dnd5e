@@ -207,13 +207,12 @@ function _separateAnnotatedTerms(terms) {
  * @param {object} [config.speaker]        The ChatMessage speaker to pass when creating the chat
  * @param {string} [config.flavor]         Flavor text to use in the posted chat message
  *
- * @param config.defaultAbility
  * @returns {Promise<D20Roll|null>}  The evaluated D20Roll, or null if the workflow was cancelled
  */
 export async function d20Roll({
   parts=[], data={}, // Roll creation
   advantage, disadvantage, fumble=1, critical=20, targetValue, elvenAccuracy, halflingLucky, reliableTalent, // Roll customization
-  chooseModifier=false, defaultAbility, fastForward=false, event, template, title, dialogOptions, // Dialog configuration
+  chooseModifier=false, fastForward=false, event, template, title, dialogOptions, // Dialog configuration
   chatMessage=true, messageData={}, rollMode, speaker, flavor // Chat Message customization
 }={}) {
 
@@ -221,12 +220,17 @@ export async function d20Roll({
   const formula = ["1d20"].concat(parts).join(" + ");
   const {advantageMode, isFF} = _determineAdvantageMode({advantage, disadvantage, fastForward, event});
   const defaultRollMode = rollMode || game.settings.get("core", "rollMode");
-  if ( chooseModifier && !isFF ) data.mod = "@mod";
+  if ( chooseModifier && !isFF ) {
+    data.mod = "@mod";
+    if ( "abilityCheckBonus" in data ) data.abilityCheckBonus = "@abilityCheckBonus";
+  }
+
   // Construct the D20Roll instance
   const roll = new CONFIG.Dice.D20Roll(formula, data, {
     flavor: flavor || title,
     advantageMode,
     defaultRollMode,
+    rollMode,
     critical,
     fumble,
     targetValue,
@@ -234,6 +238,7 @@ export async function d20Roll({
     halflingLucky,
     reliableTalent
   });
+
   // Prompt a Dialog to further configure the D20Roll
   if ( !isFF ) {
     const configured = await roll.configureDialog({
@@ -241,7 +246,7 @@ export async function d20Roll({
       chooseModifier,
       defaultRollMode: defaultRollMode,
       defaultAction: advantageMode,
-      defaultAbility: defaultAbility || data?.item?.ability,
+      defaultAbility: data?.item?.ability || data?.defaultAbility,
       template
     }, dialogOptions);
     if ( configured === null ) return null;
@@ -293,7 +298,6 @@ function _determineAdvantageMode({event, advantage=false, disadvantage=false, fa
  * @param {string[]} [config.parts]        The dice roll component parts, excluding the initial d20
  * @param {object} [config.data]           Actor or item data against which to parse the roll
  *
- * @param actor
  * @param {boolean} [config.critical=false] Flag this roll as a critical hit for the purposes of
  *                                          fast-forward or default dialog action
  * @param {number} [config.criticalBonusDice=0] A number of bonus damage dice that are added for critical hits
@@ -315,28 +319,25 @@ function _determineAdvantageMode({event, advantage=false, disadvantage=false, fa
  * @param {object} [config.speaker]        The ChatMessage speaker to pass when creating the chat
  * @param {string} [config.flavor]         Flavor text to use in the posted chat message
  *
- * @param config.actor
  * @returns {Promise<DamageRoll|null>} The evaluated DamageRoll, or null if the workflow was canceled
  */
 export async function damageRoll({
   parts=[], data, // Roll creation
-  actor = {}, critical=false, criticalBonusDice, criticalMultiplier, multiplyNumeric, powerfulCritical,
+  critical=false, criticalBonusDice, criticalMultiplier, multiplyNumeric, powerfulCritical,
   criticalBonusDamage, // Damage customization
   fastForward=false, event, allowCritical=true, template, title, dialogOptions, // Dialog configuration
   chatMessage=true, messageData={}, rollMode, speaker, flavor // Chat Message customization
 }={}) {
-  const allowPowerAttack = (messageData["flags.dnd5e.roll"]?.type !== "hitDie") && (data.item.weaponType === "martialM" || data.item.weaponType === "martialR") && actor.data.data.attributes.martialChar;
 
   // Handle input arguments
   const defaultRollMode = rollMode || game.settings.get("core", "rollMode");
-  let formula = parts.join(" + ");
-
 
   // Construct the DamageRoll instance
-
+  const formula = parts.join(" + ");
   const {isCritical, isFF} = _determineCriticalMode({critical, fastForward, event});
-  let roll = new CONFIG.Dice.DamageRoll(formula, data, {
+  const roll = new CONFIG.Dice.DamageRoll(formula, data, {
     flavor: flavor || title,
+    rollMode,
     critical: isFF ? isCritical : false,
     criticalBonusDice,
     criticalMultiplier,
@@ -352,32 +353,11 @@ export async function damageRoll({
       defaultRollMode: defaultRollMode,
       defaultCritical: isCritical,
       template,
-      allowCritical,
-      allowPowerAttack
+      allowCritical
     }, dialogOptions);
     if ( configured === null ) return null;
   }
 
-
-  // If (allowPowerAttack && roll.options.powerAttack) {
-  //   if (data.item.weaponType === "martialM") {
-  //     if (data.item.properties.two && !data.item.properties.rch) {
-  //       roll.terms += [,new OperatorTerm({ operator: "+"}), ] ["1d8 + @attributes.martialProf"];
-  //     } else if (data.item.properties.two && data.item.properties.rch) {
-  //       roll.terms += ["1d8 + @attributes.martialProf"];
-  //     } else if (!data.item.properties.lgt) {
-  //       roll.terms += ["1d8 + @attributes.martialProf"];
-  //     }
-  //   } else {
-  //     if (data.item.properties.hvy && data.item.properties.lod) {
-  //       roll.terms += ["1d8 + @attributes.martialProf"];
-  //     } else if (data.item.properties.hvy && !data.item.properties.lod) {
-  //       roll.terms += ["1d8 + @attributes.martialProf"];
-  //     }
-  //   }
-  //
-  //
-  // }
   // Evaluate the configured roll
   await roll.evaluate({async: true, maximize: roll.options.maximized});
 
@@ -404,53 +384,4 @@ function _determineCriticalMode({event, critical=false, fastForward=false}={}) {
   const isFF = fastForward || (event && (event.shiftKey || event.altKey || event.ctrlKey || event.metaKey));
   if ( event?.altKey ) critical = true;
   return {isFF, isCritical: critical};
-}
-
-/**
- * Backport Roll#isDeterministic functionality from later foundry versions.
- */
-export function shimIsDeterministic() {
-  Object.defineProperty(Roll.prototype, "isDeterministic", {
-    get() {
-      return this.terms.every(t => t.isDeterministic);
-    }
-  });
-
-  Object.defineProperty(RollTerm.prototype, "isDeterministic", {
-    get() {
-      return true;
-    }
-  });
-
-  Object.defineProperty(DiceTerm.prototype, "isDeterministic", {
-    get() {
-      return false;
-    }
-  });
-
-  Object.defineProperty(MathTerm.prototype, "isDeterministic", {
-    get() {
-      return this.terms.every(t => new Roll(t).isDeterministic);
-    }
-  });
-
-  Object.defineProperty(ParentheticalTerm.prototype, "isDeterministic", {
-    get() {
-      return new Roll(this.term).isDeterministic;
-    }
-  });
-
-  Object.defineProperty(PoolTerm.prototype, "isDeterministic", {
-    get() {
-      return this.terms.every(t => new Roll(t).isDeterministic);
-    }
-  });
-
-  Object.defineProperty(StringTerm.prototype, "isDeterministic", {
-    get() {
-      const classified = Roll._classifyStringTerm(this.term, {intermediate: false});
-      if ( classified instanceof StringTerm ) return true;
-      return classified.isDeterministic;
-    }
-  });
 }
