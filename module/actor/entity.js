@@ -386,7 +386,7 @@ export default class Actor5e extends Actor {
     // Character proficiency bonus
     data.attributes.prof = Math.floor((level + 7) / 4);
     data.attributes.martialLevel = Math.floor(
-      [...Object.values(this.classes)].reduce((p, c) => p + DND5E.computeMartialLevel(c), 0)
+      [...Object.values(this.classes)].reduce((p, c) => p + CONFIG.DND5E.computeMartialLevel(c), 0)
     );
     data.attributes.martialChar = data.attributes.martialLevel >= Math.floor(((2 / 3) * data.details.level));
     data.attributes.martialProf = Math.floor((data.attributes.martialLevel + 7) / 4);
@@ -1304,7 +1304,7 @@ export default class Actor5e extends Actor {
    * @param {boolean} [dialog]        Show a dialog prompt for configuring the hit die roll?
    * @returns {Promise<Roll|null>}    The created Roll instance, or null if no hit die was rolled
    */
-    async rollHitDie(denomination, {dialog=true}={}) {
+  async rollHitDie(denomination, {dialog=true}={}) {
 
     // If no denomination was provided, choose the first available
     let cls = null;
