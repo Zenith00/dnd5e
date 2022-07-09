@@ -5,6 +5,7 @@ import ShortRestDialog from "../apps/short-rest.js";
 import LongRestDialog from "../apps/long-rest.js";
 import ProficiencySelector from "../apps/proficiency-selector.js";
 import Item5e from "../item/entity.js";
+import {ClassFeatures} from "../classFeatures";
 
 
 /**
@@ -298,7 +299,7 @@ export default class Actor5e extends Actor {
     subclassName = subclassName.slugify();
 
     // Get the configuration of features which may be added
-    const clsConfig = CONFIG.DND5E.classFeatures[classIdentifier];
+    const clsConfig = ClassFeatures; // CONFIG.DND5E.classFeatures[classIdentifier];
     if (!clsConfig) return [];
 
     // Acquire class features
@@ -624,7 +625,7 @@ export default class Actor5e extends Actor {
       if (cls.data.name === "Sorcerer" && usesSpellPoints) {
         ad.resources.fourth.max = CONFIG.DND5E.spellPointTotals[d.levels];
         ad.resources.fourth.lr = true;
-        d.spellcasting.progression = "spellPoints";
+        ad.spellcasting.progression = "spellPoints";
       }
       // Accumulate levels
       if ( prog !== "pact" ) {
