@@ -626,7 +626,7 @@ export default class Actor5e extends Actor {
         ad.resources.fourth.max = CONFIG.DND5E.spellPointTotals[levels];
         ad.resources.fourth.lr = true;
 
-        this.spellcasting.progression = "spellPoints";
+        // This.spellcasting.progression = "spellPoints";
       }
       // Accumulate levels
       if ( prog !== "pact" ) {
