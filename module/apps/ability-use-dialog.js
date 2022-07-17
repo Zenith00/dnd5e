@@ -123,7 +123,7 @@ export default class AbilityUseDialog extends Dialog {
 
     if (usesSpellPoints) {
       for (let i=1; i <= 9; i++) {
-        if (((actorData.classes.sorcerer.levels +1 )/ 2) >= i && i >= lvl) {
+        if (((actor.classes.sorcerer.data.data.levels +1 )/ 2) >= i && i >= lvl) {
           spellLevels.push({
             level: i,
             label: `${CONFIG.DND5E.spellPointCosts[i]} (${CONFIG.DND5E.spellLevels[i]})`,
@@ -148,11 +148,14 @@ export default class AbilityUseDialog extends Dialog {
         isSpellPoints: false
       });
     }
+
+    console.log({spellLevels});
     const canCast = spellLevels.some(l => l.hasSlots) || (usesSpellPoints && actorData.resources.fourth.value >= CONFIG.DND5E.spellPointCostsRaw[lvl]);
     if ( !canCast ) data.errors.push(game.i18n.format("DND5E.SpellCastNoSlots", {
       level: CONFIG.DND5E.spellLevels[lvl],
       name: data.item.name
     }));
+
 
     // Merge spell casting data
     return foundry.utils.mergeObject(data, { isSpell: true, consumeSpellSlot, spellLevels });
