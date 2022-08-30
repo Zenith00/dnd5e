@@ -17,12 +17,12 @@ export function simplifyRollFormula(formula, { preserveFlavor=false } = {}) {
   catch(err) { console.warn(`Unable to simplify formula '${formula}': ${err}`); }
   Roll.validate(roll.formula);
 
+
   // Optionally stip flavor annotations.
   if (!preserveFlavor) roll.terms = Roll.parse(roll.formula.replace(RollTerm.FLAVOR_REGEXP, ""));
 
   // Perform arithmetic simplification on the existing roll terms.
   roll.terms = _simplifyOperatorTerms(roll.terms);
-
   if (/[*/]/.test(roll.formula)) {
     return ( roll.isDeterministic ) && ( !/\[/.test(roll.formula) || !preserveFlavor )
       ? roll.evaluate({ async: false }).total.toString()
@@ -49,7 +49,7 @@ export function simplifyRollFormula(formula, { preserveFlavor=false } = {}) {
  * @param {RollTerm[]} terms  An array of roll terms
  * @returns {RollTerm[]}  A new array of roll terms with redundant operators removed.
  */
-function _simplifyOperatorTerms(terms) {
+export function _simplifyOperatorTerms(terms) {
   return terms.reduce((acc, term) => {
     const prior = acc[acc.length - 1];
     const ops = new Set([prior?.operator, term.operator]);
@@ -218,13 +218,13 @@ export async function d20Roll({
 
   // Handle input arguments
   const formula = ["1d20"].concat(parts).join(" + ");
+
   const {advantageMode, isFF} = _determineAdvantageMode({advantage, disadvantage, fastForward, event});
   const defaultRollMode = rollMode || game.settings.get("core", "rollMode");
   if ( chooseModifier && !isFF ) {
     data.mod = "@mod";
     if ( "abilityCheckBonus" in data ) data.abilityCheckBonus = "@abilityCheckBonus";
   }
-
   // Construct the D20Roll instance
   const roll = new CONFIG.Dice.D20Roll(formula, data, {
     flavor: flavor || title,
@@ -254,7 +254,6 @@ export async function d20Roll({
 
   // Evaluate the configured roll
   await roll.evaluate({async: true});
-
   // Create a Chat Message
   if ( speaker ) {
     console.warn("You are passing the speaker argument to the d20Roll function directly which should instead be passed as an internal key of messageData");
@@ -276,9 +275,16 @@ export async function d20Roll({
  * @returns {{isFF: boolean, advantageMode: number}}  Whether the roll is fast-forward, and its advantage mode.
  */
 function _determineAdvantageMode({event, advantage=false, disadvantage=false, fastForward=false}={}) {
+  console.log({event});
   const isFF = fastForward || (event && (event.shiftKey || event.altKey || event.ctrlKey || event.metaKey));
   let advantageMode = CONFIG.Dice.D20Roll.ADV_MODE.NORMAL;
-  if ( advantage || event?.altKey ) advantageMode = CONFIG.Dice.D20Roll.ADV_MODE.ADVANTAGE;
+  if (event?.altKey && event?.shiftKey) {
+    advantageMode = CONFIG.Dice.D20Roll.ADV_MODE.SUPERADVANTAGE;
+  } else if ((event?.ctrlKey || event?.metaKey) && event?.shiftKey) {
+    advantageMode = CONFIG.Dice.D20Roll.ADV_MODE.SUPERDISADVANTAGE;
+  } else if ( advantage || event?.altKey ) {
+    advantageMode = CONFIG.Dice.D20Roll.ADV_MODE.ADVANTAGE;
+  }
   else if ( disadvantage || event?.ctrlKey || event?.metaKey ) {
     advantageMode = CONFIG.Dice.D20Roll.ADV_MODE.DISADVANTAGE;
   }

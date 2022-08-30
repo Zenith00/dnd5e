@@ -280,8 +280,7 @@ DND5E.abilityConsumptionTypes = {
   attribute: "DND5E.ConsumeAttribute",
   hitDice: "DND5E.ConsumeHitDice",
   material: "DND5E.ConsumeMaterial",
-  charges: "DND5E.ConsumeCharges",
-  hitDice: "DND5E.ConsumeHitDice"
+  charges: "DND5E.ConsumeCharges"
 };
 preLocalize("abilityConsumptionTypes", { sort: true });
 
@@ -774,7 +773,7 @@ preLocalize("healingTypes");
  * Denominations of hit dice which can apply to classes.
  * @type {string[]}
  */
-DND5E.hitDieTypes = ["d6", "d8", "d10", "d12", "d14", "d18"];
+DND5E.hitDieTypes = ["d6", "d8", "d10", "d12", "d14", "d16", "d18"];
 
 /* -------------------------------------------- */
 
@@ -1025,6 +1024,28 @@ DND5E.spellPointTotals = {
   19: 123 + 19,
   20: 133 + 20
 };
+DND5E.spellPointTotalsWarlock = {
+  1: 2,
+  2: 4,
+  3: 6,
+  4: 8,
+  5: 10,
+  6: 11,
+  7: 12,
+  8: 13,
+  9: 14,
+  10: 17,
+  11: 21,
+  12: 22,
+  13: 24,
+  14: 25,
+  15: 26,
+  16: 27,
+  17: 28,
+  18: 29,
+  19: 30,
+  20: 31
+};
 
 /**
  * Spell scroll item ID within the `DND5E.sourcePacks` compendium for each level.
@@ -1267,7 +1288,7 @@ DND5E.characterFlags = {
   },
   spellPoints: {
     name: "Spell Points",
-    hint: "Use Spell Points instead of Spell Slots (Sorcerers only)",
+    hint: "Use Spell Points instead of Spell Slots (Sorcerers & Warlocks only)",
     section: "DND5E.Feats",
     type: Boolean
   },

@@ -596,6 +596,7 @@ export default class Actor5e extends Actor {
    * @private
    */
   _computeSpellcastingProgression(actorData) {
+    console.log("Computing spellcasting progression");
     if (actorData.type === "vehicle") return;
     const ad = actorData.data;
     const spells = ad.spells;
@@ -622,10 +623,14 @@ export default class Actor5e extends Actor {
       if ( prog === "none" ) continue;
       const levels = cls.data.data.levels;
 
-      if (cls.data.name === "Sorcerer" && usesSpellPoints) {
+      if ( (cls.data.name === "Sorcerer") && usesSpellPoints) {
         ad.resources.fourth.max = CONFIG.DND5E.spellPointTotals[levels];
         ad.resources.fourth.lr = true;
+      } else if (( cls.data.name === "Warlock") && usesSpellPoints) {
+        ad.resources.fourth.max = CONFIG.DND5E.spellPointTotalsWarlock[levels];
+        ad.resources.fourth.lr = true;
       }
+
       // Accumulate levels
       if ( prog !== "pact" ) {
         caster = cls;

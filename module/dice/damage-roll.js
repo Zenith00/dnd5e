@@ -196,7 +196,7 @@ export default class DamageRoll extends Roll {
     this.options.maximized = isMaximized;
 
     this.options.rollMode = form.rollMode.value;
-    this.options.powerAttack = html[0].querySelector("#powerAttack").checked;
+    // This.options.powerAttack = html[0].querySelector("#powerAttack").checked;
     this.configureDamage();
     return this;
   }

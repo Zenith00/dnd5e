@@ -14,9 +14,14 @@
  * @param {boolean} [options.reliableTalent=false]     Allow Reliable Talent to modify this roll?
  * @extends {Roll}
  */
+import * as dice from "../dice.js";
+
 export default class D20Roll extends Roll {
   constructor(formula, data, options) {
+    console.log(`constructing d20 roll with ${formula} ${data} ${options}`);
     super(formula, data, options);
+    console.log(`local formula with ${this._formula}`);
+
     if ( !((this.terms[0] instanceof Die) && (this.terms[0].faces === 20)) ) {
       throw new Error(`Invalid D20Roll formula provided ${this._formula}`);
     }
@@ -126,10 +131,11 @@ export default class D20Roll extends Roll {
     if ( this.options.targetValue ) d20.options.target = this.options.targetValue;
 
     // Re-compile the underlying formula
-    this._formula = this.constructor.getFormula(this.terms);
+    this._formula = this.constructor.getFormula(dice._simplifyOperatorTerms(this.terms));
 
     // Mark configuration as complete
     this.options.configured = true;
+
   }
 
   /* -------------------------------------------- */

@@ -1151,6 +1151,9 @@ export default class Item5e extends Item {
   async rollAttack(options={}) {
     const itemData = this.data.data;
     const flags = this.actor.data.flags.dnd5e || {};
+    console.log("Calling hook");
+    Hooks.callAll("rollAttack", this);
+
     if ( !this.hasAttack ) {
       throw new Error("You may not place an Attack Roll with this Item.");
     }
