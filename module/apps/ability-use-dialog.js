@@ -139,7 +139,7 @@ export default class AbilityUseDialog extends Dialog {
 
     // If this character has pact slots, present them as an option for casting the spell.
     const pact = actorData.spells.pact;
-    if (pact.level >= lvl) {
+    if (pact.level >= lvl && !usesSpellPoints) {
       spellLevels.push({
         level: "pact",
         label: `${game.i18n.format("DND5E.SpellLevelPact", {level: pact.level, n: pact.value})}`,
