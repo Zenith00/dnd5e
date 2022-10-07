@@ -3,7 +3,7 @@
   "name": "Trident of Fish Command",
   "type": "weapon",
   "img": "icons/skills/ranged/arrows-flying-salvo-purple.webp",
-  "data": {
+  "system": {
     "description": {
       "value": "<p><em>(Requires attunement)</em></p>\n<p>This trident is a magic weapon. It has 3 charges. While you carry it, you can use an action and expend 1 charge to cast @Compendium[dnd5e.spells.LrPvWHBPmiMQQsKB]{Dominate Beast} (save DC 15) from it on a beast that has an innate swimming speed. The trident regains 1d3 expended charges daily at dawn.</p>",
       "chat": "",
@@ -40,7 +40,8 @@
     "uses": {
       "value": 3,
       "max": 3,
-      "per": "charges"
+      "per": "charges",
+      "recovery": "1d3"
     },
     "consume": {
       "type": "",
@@ -106,8 +107,16 @@
   "effects": [],
   "folder": null,
   "sort": 1800000,
-  "permission": {
+  "ownership": {
     "default": 0
   },
-  "flags": {}
+  "flags": {},
+  "_stats": {
+    "systemId": "dnd5e",
+    "systemVersion": "2.0.2",
+    "coreVersion": "10.286",
+    "createdTime": 1661787233866,
+    "modifiedTime": 1663775408791,
+    "lastModifiedBy": "dnd5ebuilder0000"
+  }
 }
