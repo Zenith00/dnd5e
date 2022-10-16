@@ -48,7 +48,7 @@ export default function simplifyRollFormula(formula, { preserveFlavor=false } = 
  * @param {RollTerm[]} terms  An array of roll terms.
  * @returns {RollTerm[]}      A new array of roll terms with redundant operators removed.
  */
-function _simplifyOperatorTerms(terms) {
+export function _simplifyOperatorTerms(terms) {
   return terms.reduce((acc, term) => {
     const prior = acc[acc.length - 1];
     const ops = new Set([prior?.operator, term.operator]);

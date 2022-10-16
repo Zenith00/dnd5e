@@ -13,8 +13,8 @@
  * @param {boolean} [options.halflingLucky=false]      Allow Halfling Luck to modify this roll?
  * @param {boolean} [options.reliableTalent=false]     Allow Reliable Talent to modify this roll?
  */
-import * as dice from "../dice.js";
-
+// import * as dice from "../dice.js";
+import _simplifyOperatorTerms from "./simplify-roll-formula.mjs";
 export default class D20Roll extends Roll {
   constructor(formula, data, options) {
     super(formula, data, options);
@@ -178,7 +178,7 @@ export default class D20Roll extends Roll {
     if ( this.options.targetValue ) d20.options.target = this.options.targetValue;
 
     // Re-compile the underlying formula
-    this._formula = this.constructor.getFormula(dice._simplifyOperatorTerms(this.terms));
+    this._formula = this.constructor.getFormula(_simplifyOperatorTerms(this.terms));
 
     // Mark configuration as complete
     this.options.configured = true;
