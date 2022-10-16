@@ -865,9 +865,9 @@ export default class Item5e extends Item {
     const resourceUpdates = [];
 
     // Consume Recharge
-    if ( consumeRecharge ) {
+    if (consumeRecharge) {
       const recharge = this.system.recharge || {};
-      if ( recharge.charged === false ) {
+      if (recharge.charged === false) {
         ui.notifications.warn(game.i18n.format("DND5E.ItemNoUses", {name: this.name}));
         return false;
       }
@@ -875,63 +875,64 @@ export default class Item5e extends Item {
     }
 
     // Consume Limited Resource
-    if ( consumeResource ) {
+    if (consumeResource) {
       const canConsume = this._handleConsumeResource(itemUpdates, actorUpdates, resourceUpdates);
-      if ( canConsume === false ) return false;
+      if (canConsume === false) return false;
     }
 
     // Consume Spell Slots
-    if ( consumeSpellSlot && consumeSpellLevel ) {
-      if ( Number.isNumeric(consumeSpellLevel) ) consumeSpellLevel = `spell${consumeSpellLevel}`;
+    if (consumeSpellSlot && consumeSpellLevel) {
+      if (Number.isNumeric(consumeSpellLevel)) consumeSpellLevel = `spell${consumeSpellLevel}`;
       const level = this.actor?.system.spells[consumeSpellLevel];
       const spells = Number(level?.value ?? 0);
-      if ( spells === 0 ) {
+      if (spells === 0) {
         const labelKey = consumeSpellLevel === "pact" ? "DND5E.SpellProgPact" : `DND5E.SpellLevel${this.system.level}`;
         const remainingSpellPoints = this.actor?.data.system.resources.fourth?.value || 0;
         const spellPointCost = CONFIG.DND5E.spellPointCostsRaw[Number(consumeSpellLevel.substring("spell".length))];
         //TODO: check spell point works
-      if (spells === 0 && !(consumeSpellPoints && (remainingSpellPoints >= spellPointCost))) {
-        const label = game.i18n.localize(consumeSpellLevel === "pact" ? "DND5E.SpellProgPact" : `DND5E.SpellLevel${id.level}`);
-        ui.notifications.warn(game.i18n.format("DND5E.SpellCastNoSlots", {name: this.name, level: label}));
-        return false;
-      }
-      if (consumeSpellPoints) {
-        actorUpdates["system.resources.fourth.value"] = remainingSpellPoints - spellPointCost;
-      } else {
-        actorUpdates[`system.spells.${consumeSpellLevel}.value`] = Math.max(spells - 1, 0);
-      }
-    }
-
-    // Consume Limited Usage
-    if ( consumeUsage ) {
-      const uses = this.system.uses || {};
-      const available = Number(uses.value ?? 0);
-      let used = false;
-      const remaining = Math.max(available - 1, 0);
-      if ( available >= 1 ) {
-        used = true;
-        itemUpdates["system.uses.value"] = remaining;
-      }
-
-      // Reduce quantity if not reducing usages or if usages hit zero, and we are set to consumeQuantity
-      if ( consumeQuantity && (!used || (remaining === 0)) ) {
-        const q = Number(this.system.quantity ?? 1);
-        if ( q >= 1 ) {
-          used = true;
-          itemUpdates["system.quantity"] = Math.max(q - 1, 0);
-          itemUpdates["system.uses.value"] = uses.max ?? 1;
+        if (spells === 0 && !(consumeSpellPoints && (remainingSpellPoints >= spellPointCost))) {
+          const label = game.i18n.localize(consumeSpellLevel === "pact" ? "DND5E.SpellProgPact" : `DND5E.SpellLevel${id.level}`);
+          ui.notifications.warn(game.i18n.format("DND5E.SpellCastNoSlots", {name: this.name, level: label}));
+          return false;
+        }
+        if (consumeSpellPoints) {
+          actorUpdates["system.resources.fourth.value"] = remainingSpellPoints - spellPointCost;
+        } else {
+          actorUpdates[`system.spells.${consumeSpellLevel}.value`] = Math.max(spells - 1, 0);
         }
       }
 
-      // If the item was not used, return a warning
-      if ( !used ) {
-        ui.notifications.warn(game.i18n.format("DND5E.ItemNoUses", {name: this.name}));
-        return false;
-      }
-    }
+      // Consume Limited Usage
+      if (consumeUsage) {
+        const uses = this.system.uses || {};
+        const available = Number(uses.value ?? 0);
+        let used = false;
+        const remaining = Math.max(available - 1, 0);
+        if (available >= 1) {
+          used = true;
+          itemUpdates["system.uses.value"] = remaining;
+        }
 
-    // Return the configured usage
-    return {itemUpdates, actorUpdates, resourceUpdates};
+        // Reduce quantity if not reducing usages or if usages hit zero, and we are set to consumeQuantity
+        if (consumeQuantity && (!used || (remaining === 0))) {
+          const q = Number(this.system.quantity ?? 1);
+          if (q >= 1) {
+            used = true;
+            itemUpdates["system.quantity"] = Math.max(q - 1, 0);
+            itemUpdates["system.uses.value"] = uses.max ?? 1;
+          }
+        }
+
+        // If the item was not used, return a warning
+        if (!used) {
+          ui.notifications.warn(game.i18n.format("DND5E.ItemNoUses", {name: this.name}));
+          return false;
+        }
+      }
+
+      // Return the configured usage
+      return {itemUpdates, actorUpdates, resourceUpdates};
+    }
   }
 
   /* -------------------------------------------- */
