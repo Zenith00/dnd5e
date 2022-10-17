@@ -887,21 +887,20 @@ export default class Item5e extends Item {
       const spells = Number(level?.value ?? 0);
       if (spells === 0) {
         const labelKey = consumeSpellLevel === "pact" ? "DND5E.SpellProgPact" : `DND5E.SpellLevel${this.system.level}`;
-        const remainingSpellPoints = this.actor?.data.system.resources.fourth?.value || 0;
-        const spellPointCost = CONFIG.DND5E.spellPointCostsRaw[Number(consumeSpellLevel.substring("spell".length))];
-        //TODO: check spell point works
-        if (spells === 0 && !(consumeSpellPoints && (remainingSpellPoints >= spellPointCost))) {
+        const label = game.i18n.localize(labelKey);
+        ui.notifications.warn(game.i18n.format("DND5E.SpellCastNoSlots", {name: this.name, level: label}));
+        return false;
+      }
+      if ((consumeSpellPoints && (remainingSpellPoints < spellPointCost))) {
           const label = game.i18n.localize(consumeSpellLevel === "pact" ? "DND5E.SpellProgPact" : `DND5E.SpellLevel${id.level}`);
           ui.notifications.warn(game.i18n.format("DND5E.SpellCastNoSlots", {name: this.name, level: label}));
           return false;
-        }
-        if (consumeSpellPoints) {
-          actorUpdates["system.resources.fourth.value"] = remainingSpellPoints - spellPointCost;
-        } else {
-          actorUpdates[`system.spells.${consumeSpellLevel}.value`] = Math.max(spells - 1, 0);
-        }
       }
-
+      if (consumeSpellPoints) {
+        actorUpdates["system.resources.fourth.value"] = remainingSpellPoints - spellPointCost;
+      } else {
+        actorUpdates[`system.spells.${consumeSpellLevel}.value`] = Math.max(spells - 1, 0);
+      }
       // Consume Limited Usage
       if (consumeUsage) {
         const uses = this.system.uses || {};
