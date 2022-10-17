@@ -178,7 +178,7 @@ export default class D20Roll extends Roll {
     if ( this.options.targetValue ) d20.options.target = this.options.targetValue;
 
     // Re-compile the underlying formula
-    this._formula = this.constructor.getFormula(_simplifyOperatorTerms(this.terms));
+    this._formula = this.constructor.getFormula(this.terms);
 
     // Mark configuration as complete
     this.options.configured = true;

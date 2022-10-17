@@ -52,7 +52,8 @@ export default class AbilityUseDialog extends Dialog {
       actor: item.actor
     };
     if ( item.type === "spell" ) this._getSpellData(item.actor.system, item.system, data);
-
+    console.log("AUD:?")
+    console.log({data})
     // Render the ability usage template
     const html = await renderTemplate("systems/dnd5e/templates/apps/ability-use.hbs", data);
 
