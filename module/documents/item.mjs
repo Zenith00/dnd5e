@@ -891,6 +891,10 @@ export default class Item5e extends Item {
         ui.notifications.warn(game.i18n.format("DND5E.SpellCastNoSlots", {name: this.name, level: label}));
         return false;
       }
+      const spellPointCost = CONFIG.DND5E.spellPointCostsRaw[Number(consumeSpellLevel.substring("spell".length))];
+      const remainingSpellPoints = this.actor?.data.data.resources.fourth?.value || 0;
+
+
       if ((consumeSpellPoints && (remainingSpellPoints < spellPointCost))) {
           const label = game.i18n.localize(consumeSpellLevel === "pact" ? "DND5E.SpellProgPact" : `DND5E.SpellLevel${id.level}`);
           ui.notifications.warn(game.i18n.format("DND5E.SpellCastNoSlots", {name: this.name, level: label}));
