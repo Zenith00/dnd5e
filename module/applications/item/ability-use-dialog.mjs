@@ -48,7 +48,8 @@ export default class AbilityUseDialog extends Dialog {
       consumeUses: uses.per && (uses.max > 0),
       canUse: recharges ? recharge.charged : sufficientUses,
       createTemplate: game.user.can("TEMPLATE_CREATE") && item.hasAreaTarget,
-      errors: []
+      errors: [],
+      actor: item.actor
     };
     if ( item.type === "spell" ) this._getSpellData(item.actor.system, item.system, data);
 
@@ -92,8 +93,8 @@ export default class AbilityUseDialog extends Dialog {
    * @private
    */
   static _getSpellData(actorData, itemData, data) {
-
     // Determine whether the spell may be up-cast
+    let actor = data.actor;
     const lvl = itemData.level;
     const consumeSpellSlot = (lvl > 0) && CONFIG.DND5E.spellUpcastModes.includes(itemData.preparation.mode);
 
